@@ -1,0 +1,28 @@
+package com.linuxgods.kreiger.idea.jmte;
+
+import com.linuxgods.kreiger.idea.jmte.psi.JmteTypes;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Wrap;
+import com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper;
+import com.intellij.formatting.templateLanguages.TemplateLanguageBlock;
+import com.intellij.formatting.templateLanguages.TemplateLanguageFormattingModelBuilder;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+public class JmteFormattingModelBuilder extends TemplateLanguageFormattingModelBuilder {
+
+    @Override
+    public TemplateLanguageBlock createTemplateLanguageBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment, @Nullable List<DataLanguageBlockWrapper> foreignChildren, @NotNull CodeStyleSettings codeStyleSettings) {
+        return new TemplateLanguageBlock(node, wrap, alignment, this, codeStyleSettings, foreignChildren) {
+            @Override
+            protected IElementType getTemplateTextElementType() {
+                return JmteTypes.TEXT;
+            }
+        };
+    }
+}

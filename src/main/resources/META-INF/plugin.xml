@@ -1,0 +1,56 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.linuxgods.kreiger.idea.jmte</id>
+    <idea-version since-build="222"/>
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>JMTE: Java Minimal Template Language</name>
+    
+    <vendor email="christoffer.hammarstrom@gmail.com">Christoffer Hammarström</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description><![CDATA[
+        <blockquote>
+        <a href="https://github.com/DJCordhose/jmte">The Java project Minimal Template Engine</a> is meant to fill the gap
+        between simple string formatting with basic Java classes like String.format
+        and complex template solutions like Velocity or StringTemplate.
+        </blockquote>
+    ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.java</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteFileType"
+                  fieldName="INSTANCE" extensions="mte" language="JMTE"/>
+
+        <lang.parserDefinition language="JMTE"
+                               implementationClass="com.linuxgods.kreiger.idea.jmte.JmteParserDefinition"/>
+        <lang.fileViewProviderFactory language="JMTE"
+                                      implementationClass="com.linuxgods.kreiger.idea.jmte.JmteFileViewProviderFactory"/>
+        <lang.formatter language="JMTE"
+                        implementationClass="com.linuxgods.kreiger.idea.jmte.JmteFormattingModelBuilder"/>
+        <!--
+        <lang.inspectionSuppressor language="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteInspectionSuppressor" />
+        <daemon.highlightInfoFilter implementation="com.linuxgods.kreiger.idea.jmte.JmteErrorFilter"/>
+        -->
+        <highlightErrorFilter implementation="com.linuxgods.kreiger.idea.jmte.JmteErrorFilter" />
+        <!--
+        <lang.treePatcher language="JSON" implementationClass="com.intellij.psi.templateLanguages.MiddleTreePatcher"/>
+        -->
+        <editorNotificationProvider implementation="com.linuxgods.kreiger.idea.jmte.JmteEditorNotificationProvider"/>
+
+        <lang.syntaxHighlighter language="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteSyntaxHighlighter"/>
+        <syntaxHighlighter key="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteSyntaxHighlighter"/>
+        <editorHighlighterProvider filetype="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteEditorHighlighterProvider" />
+
+    </extensions>
+</idea-plugin>
