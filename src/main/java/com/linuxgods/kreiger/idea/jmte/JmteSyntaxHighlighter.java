@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
 import static com.intellij.openapi.editor.HighlighterColors.BAD_CHARACTER;
-import static com.intellij.openapi.editor.colors.TextAttributesKey.EMPTY_ARRAY;
+import static com.intellij.openapi.editor.HighlighterColors.TEXT;
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
 public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
@@ -28,6 +28,7 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
     private static final TextAttributesKey[] IDENTIFIER_KEYS = keys("JMTE_IDENTIFIER", IDENTIFIER);
     private static final TextAttributesKey[] STRING_KEYS = keys("JMTE_STRING", STRING);
     private static final TextAttributesKey[] COMMENT_KEYS = keys("JMTE_COMMENT", BLOCK_COMMENT);
+    private static final TextAttributesKey[] WHITESPACE_KEYS = keys("JMTE_WHITESPACE", TEXT);
     private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
 
     @Override
@@ -43,6 +44,9 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
     }
 
     @Nullable private static TextAttributesKey[] getTextAttributesKeys(IElementType tokenType) {
+        if (tokenType.equals(TokenType.WHITE_SPACE)) {
+            return WHITESPACE_KEYS;
+        }
         if (tokenType.equals(JmteTypes.LEFT_PAREN_TOKEN) || tokenType.equals(JmteTypes.RIGHT_PAREN_TOKEN)) {
             return PAREN_KEYS;
         }
@@ -61,6 +65,9 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
         if (JmteTokenSets.MARKUP.contains(tokenType)) {
             return MARKUP_KEYS;
         }
+        if (JmteTokenSets.COMMENTS.contains(tokenType)) {
+            return COMMENT_KEYS;
+        }
         if (JmteTokenSets.KEYWORDS.contains(tokenType)) {
             return KEYWORD_KEYS;
         }
@@ -69,9 +76,6 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
         }
         if (tokenType.equals(JmteTypes.STRING_TOKEN)) {
             return STRING_KEYS;
-        }
-        if (tokenType.equals(JmteTypes.COMMENT_TOKEN)) {
-            return COMMENT_KEYS;
         }
         if (tokenType.equals(TokenType.BAD_CHARACTER)) {
             return BAD_CHAR_KEYS;

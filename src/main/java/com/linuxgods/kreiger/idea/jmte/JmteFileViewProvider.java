@@ -87,7 +87,7 @@ public class JmteFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
         return parserDefinition.createFile(this);
     }
 
-    private static @NotNull Language getSubstitutedLanguage(VirtualFile virtualFile, @NotNull Project project) {
+    static @NotNull Language getSubstitutedLanguage(VirtualFile virtualFile, @NotNull Project project) {
         Language language = getTemplateDataLanguage(virtualFile, project);
 
         return language instanceof TemplateLanguage

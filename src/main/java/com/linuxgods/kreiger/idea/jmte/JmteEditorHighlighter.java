@@ -26,7 +26,7 @@ public class JmteEditorHighlighter extends LayeredLexerEditorHighlighter {
     }
 
     private static @NotNull SyntaxHighlighter getTemplateDataLanguageHighlighter(Project project, VirtualFile virtualFile) {
-        FileType type = project != null && virtualFile != null ? JmteFileViewProvider.getTemplateDataLanguage(virtualFile, project).getAssociatedFileType() : null;
+        FileType type = project == null || virtualFile == null ? null : JmteFileViewProvider.getTemplateDataLanguage(virtualFile, project).getAssociatedFileType();
         FileType fileType = type == null ? FileTypes.PLAIN_TEXT : type;
 
         SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, virtualFile);

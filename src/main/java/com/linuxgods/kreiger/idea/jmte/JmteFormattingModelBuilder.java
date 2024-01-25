@@ -21,7 +21,7 @@ public class JmteFormattingModelBuilder extends TemplateLanguageFormattingModelB
         return new TemplateLanguageBlock(node, wrap, alignment, this, codeStyleSettings, foreignChildren) {
             @Override
             protected IElementType getTemplateTextElementType() {
-                return JmteTypes.TEXT;
+                return JmteTypes.TEMPLATE_DATA_TOKEN;
             }
         };
     }

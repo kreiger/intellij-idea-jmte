@@ -7,8 +7,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.TokenType;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import java.util.Deque;
 import java.util.ArrayDeque;
-import java.util.List;
+import java.util.HexFormat;import java.util.List;
 %%
 
 %{
@@ -29,6 +30,8 @@ import java.util.List;
 %class _JmteLexer
 %implements FlexLexer
 %unicode
+%line
+%column
 %function advance
 %type IElementType
 %eof{  return;
@@ -36,11 +39,11 @@ import java.util.List;
 
 START_TOKEN=\$\{
 END_TOKEN=\}
-TEMPLATE_DATA_TOKEN=([^\$]|\$[^\{])+|\$
-EOL_TOKEN="\r"|"\n"|"\r\n"
+EOL_TOKEN=\R
 LINE_WS_TOKEN=[\ \t\f]
 WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
+%state TEMPLATE_DATA
 %state EXPRESSION_START
 %state EXPRESSION_END
 %state STRING_EXPRESSION
@@ -64,18 +67,24 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <YYINITIAL> {
     {START_TOKEN}                            { yybegin(EXPRESSION_START); return JmteTypes.START_TOKEN; }
-    {TEMPLATE_DATA_TOKEN}                    { return JmteTypes.TEMPLATE_DATA_TOKEN; }
+    [^]                                      { yybegin(TEMPLATE_DATA); }
+}
+
+<TEMPLATE_DATA> {
+    ~ {START_TOKEN}                          { yypushback(2); yybegin(YYINITIAL); return JmteTypes.TEMPLATE_DATA_TOKEN; }
+    [^]                                      { }
+    <<EOF>>                                  { yybegin(YYINITIAL); return JmteTypes.TEMPLATE_DATA_TOKEN; }
 }
 
 <EXPRESSION_START> {
-    "--"                                     { yybegin(COMMENT); yypushback(2); }
+    "--"                                     { yybegin(COMMENT); return JmteTypes.COMMENT_KEYWORD_TOKEN; }
     "foreach" \W                             { yypushback(1); yybegin(FOREACH); return JmteTypes.FOREACH_KEYWORD_TOKEN; }
     "if" \W                                  { yypushback(1); yybegin(IF); return JmteTypes.IF_KEYWORD_TOKEN; }
     "elseif" \W                              { yypushback(1); yybegin(IF); return JmteTypes.ELSEIF_KEYWORD_TOKEN; }
     "else" \W                                { yypushback(1); yybegin(EXPRESSION_END); return JmteTypes.ELSE_KEYWORD_TOKEN; }
     "end" \W                                 { yypushback(1); yybegin(EXPRESSION_END); return JmteTypes.END_KEYWORD_TOKEN; }
-    {WHITE_SPACE}                            { return TokenType.WHITE_SPACE; }
     {END_TOKEN}                              { yybegin(YYINITIAL); return JmteTypes.END_TOKEN; }
+    {WHITE_SPACE} \S                         { yybegin(STRING_EXPRESSION); yypushback(1); return TokenType.WHITE_SPACE; }
     \S                                       { yybegin(STRING_EXPRESSION); yypushback(1); }
 }
 
@@ -188,3 +197,8 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
     (\\[\\(.;}\s]|[^(.;}\s])+                 { return JmteTypes.IDENTIFIER_TOKEN; }
 }
 
+[^]                                           {
+                                                System.out.println(TEMPLATE_DATA+" "+yystate()+" "+yyline+" "+yycolumn+">"+yytext()+"<"+HexFormat.of().formatHex(yytext().toString().getBytes())+"\n");
+                                                yybegin(TEMPLATE_DATA);
+                                                return TokenType.BAD_CHARACTER;
+                                              }

@@ -13,41 +13,85 @@
   tokenTypeClass="com.linuxgods.kreiger.idea.jmte.psi.JmteTokenType"
 }
 
-jmteFile ::= template_*
+jmteFile ::= content_or_template*
 
-private template_ ::= text | comment | if_block | foreach_block | string_expression
+private content_or_template ::= content | template
 
-text ::= TEMPLATE_DATA_TOKEN
+private template ::= if_block | foreach_block | comment_tag | string_tag
 
-private recover ::= !text
+content ::= TEMPLATE_DATA_TOKEN { consumeTokenMethod="consumeTokenFast" }
 
-comment ::= START_TOKEN COMMENT_TOKEN? END_TOKEN
+//private recover ::= ! text
+//private recover ::= ! END_TOKEN
+//private recover ::= START_TOKEN
 
-end_expression ::= START_TOKEN END_KEYWORD_TOKEN END_TOKEN
+comment_tag ::= <<tag comment?>> {name="${--...}"}
 
-if_block ::= if_expression template_* (elseif template_*)* (else template_*)? end_expression
+comment ::= comment_keyword comment_token
 
-if_expression ::= START_TOKEN IF_KEYWORD_TOKEN condition END_TOKEN
+private comment_keyword ::= COMMENT_KEYWORD_TOKEN {name="--"}
+
+private comment_token ::= COMMENT_TOKEN
+
+end_tag ::= <<tag end_keyword>> {name="${end}"}
+
+private end_keyword ::= END_KEYWORD_TOKEN {name="end_tag"}
+
+if_block ::= if_tag content_or_template* (elseif_tag content_or_template*)* (else_tag content_or_template*)? end_tag {pin=1}
+
+if_tag ::= <<tag if>> {name="${if ...}"}
+
+if ::= if_keyword condition
+
+private if_keyword ::= IF_KEYWORD_TOKEN {name="if_tag"}
 
 condition ::= NOT_TOKEN? (expression (EQUALS_TOKEN string)?)
 
-else ::= START_TOKEN ELSE_KEYWORD_TOKEN END_TOKEN
+else_tag ::= <<tag else_keyword>> {name="${else}"}
 
-elseif ::= START_TOKEN ELSEIF_KEYWORD_TOKEN condition END_TOKEN
+private else_keyword ::= ELSE_KEYWORD_TOKEN {name="else_tag"}
 
-foreach_block ::= START_TOKEN FOREACH_KEYWORD_TOKEN expression (identifier string?)? END_TOKEN template_* end_expression
+elseif_tag ::= <<tag elseif>> {name="${elseif ...}"}
 
-string_expression ::= START_TOKEN (string COMMA_TOKEN expression defaultValue? COMMA_TOKEN string | expression defaultValue?) (SEMI_COLON_TOKEN format)? END_TOKEN {
-    methods=[prefix="/[1]/string[0]" suffix="/[1]/string[1]"] 
+elseif ::= elseif_keyword condition
+
+private elseif_keyword ::= ELSEIF_KEYWORD_TOKEN {name="elseif_tag"}
+
+foreach_block ::= foreach_tag content_or_template* end_tag {pin=1}
+
+foreach_tag ::= <<tag foreach >> {name="${foreach ...}"}
+
+foreach ::= foreach_keyword foreach_parameters
+
+foreach_parameters ::= expression (identifier foreach_separator)?
+
+private foreach_separator ::= string?
+
+private foreach_keyword ::= FOREACH_KEYWORD_TOKEN {name="foreach_tag"}
+
+string_tag ::= <<tag ((affixed | unaffixed) format?) >> {
+    methods=[prefix="/[0]/affixed/string[0]" suffix="/[0]/affixed/string[1]"]
+    name="${...}"
 }
+
+private semi_colon ::= SEMI_COLON_TOKEN {name=";"}
+
+affixed ::= string comma unaffixed comma string
+
+private comma ::= COMMA_TOKEN {name=","}
+
+unaffixed ::= expression defaultValue? {extends=unaffixed}
 
 string ::= STRING_TOKEN?
 
-format ::= identifier param?
+format ::= semi_colon identifier format_params? {name=";format(parameters)"}
 
-private defaultValue ::= LEFT_PAREN_TOKEN string RIGHT_PAREN_TOKEN
+defaultValue ::= left_paren string right_paren {name="(default value)"}
 
-private param ::= LEFT_PAREN_TOKEN string RIGHT_PAREN_TOKEN
+format_params ::= left_paren string right_paren {name="(format parameters)"}
+
+private left_paren ::= LEFT_PAREN_TOKEN {name="("}
+private right_paren ::= RIGHT_PAREN_TOKEN {name=")"}
 
 expression ::= qualifier_expression
 
@@ -60,3 +104,7 @@ qualified_reference_expression ::= qualifier_expression DOT_TOKEN identifier {ex
 simple_reference_expression ::= identifier {elementType=reference_expression}
 
 identifier ::= IDENTIFIER_TOKEN
+
+private meta tag ::= start_token <<t>> end_token {name="tag"}
+private start_token ::= START_TOKEN {name="${"}
+private end_token ::= END_TOKEN {name="}"}
