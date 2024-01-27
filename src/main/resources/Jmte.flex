@@ -37,6 +37,7 @@ import java.util.HexFormat;import java.util.List;
 %eof{  return;
 %eof}
 
+ESCAPE_TOKEN=\\
 START_TOKEN=\$\{
 END_TOKEN=\}
 EOL_TOKEN=\R
@@ -44,6 +45,7 @@ LINE_WS_TOKEN=[\ \t\f]
 WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 %state TEMPLATE_DATA
+%state ESCAPE
 %state EXPRESSION_START
 %state EXPRESSION_END
 %state STRING_EXPRESSION
@@ -66,25 +68,36 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 
 <YYINITIAL> {
-    {START_TOKEN}                            { yybegin(EXPRESSION_START); return JmteTypes.START_TOKEN; }
+    {START_TOKEN} ~ ([^\\] {END_TOKEN})      {
+                                                  yypushback(yylength()-2);
+                                                  yybegin(EXPRESSION_START);
+                                                  return JmteTypes.START_TOKEN;
+                                             }
+    {ESCAPE_TOKEN}                           { yybegin(ESCAPE); }
+    [^]                                      { yybegin(TEMPLATE_DATA); }
+}
+
+<ESCAPE> {
     [^]                                      { yybegin(TEMPLATE_DATA); }
 }
 
 <TEMPLATE_DATA> {
-    ~ {START_TOKEN}                          { yypushback(2); yybegin(YYINITIAL); return JmteTypes.TEMPLATE_DATA_TOKEN; }
+    {START_TOKEN}                            { yypushback(2); yybegin(YYINITIAL); return JmteTypes.TEMPLATE_DATA_TOKEN; }
+    {ESCAPE_TOKEN}                           { yybegin(ESCAPE); }
     [^]                                      { }
     <<EOF>>                                  { yybegin(YYINITIAL); return JmteTypes.TEMPLATE_DATA_TOKEN; }
 }
 
 <EXPRESSION_START> {
     "--"                                     { yybegin(COMMENT); return JmteTypes.COMMENT_KEYWORD_TOKEN; }
-    "foreach" \W                             { yypushback(1); yybegin(FOREACH); return JmteTypes.FOREACH_KEYWORD_TOKEN; }
-    "if" \W                                  { yypushback(1); yybegin(IF); return JmteTypes.IF_KEYWORD_TOKEN; }
-    "elseif" \W                              { yypushback(1); yybegin(IF); return JmteTypes.ELSEIF_KEYWORD_TOKEN; }
-    "else" \W                                { yypushback(1); yybegin(EXPRESSION_END); return JmteTypes.ELSE_KEYWORD_TOKEN; }
-    "end" \W                                 { yypushback(1); yybegin(EXPRESSION_END); return JmteTypes.END_KEYWORD_TOKEN; }
+    "foreach"                                { yybegin(FOREACH); return JmteTypes.FOREACH_KEYWORD_TOKEN; }
+    "if"                                     { yybegin(IF); return JmteTypes.IF_KEYWORD_TOKEN; }
+    "elseif"                                 { yybegin(IF); return JmteTypes.ELSEIF_KEYWORD_TOKEN; }
+    "else"                                   { yybegin(EXPRESSION_END); return JmteTypes.ELSE_KEYWORD_TOKEN; }
+    "end"                                    { yybegin(EXPRESSION_END); return JmteTypes.END_KEYWORD_TOKEN; }
     {END_TOKEN}                              { yybegin(YYINITIAL); return JmteTypes.END_TOKEN; }
-    {WHITE_SPACE} \S                         { yybegin(STRING_EXPRESSION); yypushback(1); return TokenType.WHITE_SPACE; }
+    {WHITE_SPACE}                            { return TokenType.WHITE_SPACE; }
+    \w+                                      { yybegin(STRING_EXPRESSION); yypushback(yylength()); }
     \S                                       { yybegin(STRING_EXPRESSION); yypushback(1); }
 }
 
@@ -139,14 +152,13 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <FOREACH_SEPARATOR> {
     {END_TOKEN}                               { yybegin(YYINITIAL); return JmteTypes.END_TOKEN; }
-    (\\[\\}]|[^\}])+                                    { return JmteTypes.STRING_TOKEN; } 
+    (\\[\\}]|[^\}])+                          { return JmteTypes.STRING_TOKEN; }
 }
 
 
 <STRING_EXPRESSION> {
-    ~{END_TOKEN}                              {
+    [^}]+                              {
                 String text = yytext().toString();
-                text = text.substring(0, text.length()-1);
                 List<String> semicolon = Util.RAW_OUTPUT_MINI_PARSER.split(text, ';', 2);
                 List<String> comma = Util.RAW_OUTPUT_MINI_PARSER.split(semicolon.get(0), ',', 3);
                 if (comma.size() == 3) {
@@ -164,7 +176,6 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <INFIX> {
     {WHITE_SPACE}                             { return TokenType.BAD_CHARACTER; }
-    "."                                       { return JmteTypes.DOT_TOKEN; }
     ","                                       { yybegin(SUFFIX); return JmteTypes.COMMA_TOKEN; }
     "("                                       { yypushstate(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
     (\\[\\.,(\s]|[^.,(\s])+                   { return JmteTypes.IDENTIFIER_TOKEN; }
@@ -190,15 +201,15 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <UNAFFIXED> {
     {END_TOKEN}                               { yybegin(YYINITIAL); return JmteTypes.END_TOKEN; }
-    {WHITE_SPACE}                             { return TokenType.BAD_CHARACTER; }
+    {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
     "("                                       { yypushstate(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
     "."                                       { return JmteTypes.DOT_TOKEN; }
     ";"                                       { yypushstate(FORMAT); return JmteTypes.SEMI_COLON_TOKEN; }
-    (\\[\\(.;}\s]|[^(.;}\s])+                 { return JmteTypes.IDENTIFIER_TOKEN; }
+    (\\[\\(.;}\s]|[^\\(.;}\s])+                 { return JmteTypes.IDENTIFIER_TOKEN; }
 }
 
 [^]                                           {
-                                                System.out.println(TEMPLATE_DATA+" "+yystate()+" "+yyline+" "+yycolumn+">"+yytext()+"<"+HexFormat.of().formatHex(yytext().toString().getBytes())+"\n");
-                                                yybegin(TEMPLATE_DATA);
+                                                System.out.println(EXPRESSION_START+" "+yystate()+" "+yyline+" "+yycolumn+">"+yytext()+"<"+HexFormat.of().formatHex(yytext().toString().getBytes())+"\n");
+                                                //yybegin(TEMPLATE_DATA);
                                                 return TokenType.BAD_CHARACTER;
                                               }

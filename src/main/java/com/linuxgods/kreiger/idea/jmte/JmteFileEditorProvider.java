@@ -16,8 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
@@ -48,9 +47,7 @@ public class JmteFileEditorProvider implements FileEditorProvider, DumbAware {
             @Override public void afterDocumentChange(@NotNull Document document) {
                 String transformed = getTransformed(document.getText());
                 Document previewDocument = previewEditor.getEditor().getDocument();
-                WriteAction.run(() -> {
-                    previewDocument.setText(transformed);
-                });
+                WriteAction.run(() -> previewDocument.setText(transformed));
             }
         };
         document.addDocumentListener(documentListener);
@@ -66,11 +63,12 @@ public class JmteFileEditorProvider implements FileEditorProvider, DumbAware {
                     return List.of(key,key);
                 }
             };
-            transformed = engine.transform(template, model);
+            return engine.transform(template, model);
         } catch (Exception e) {
-            transformed = e.getMessage();
+            StringWriter stringWriter = new StringWriter();
+            e.printStackTrace(new PrintWriter(stringWriter));
+            return stringWriter.toString();
         }
-        return transformed;
     }
 
     @Override public @NotNull @NonNls String getEditorTypeId() {

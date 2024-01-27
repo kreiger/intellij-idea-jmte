@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
 import static com.intellij.openapi.editor.HighlighterColors.BAD_CHARACTER;
-import static com.intellij.openapi.editor.HighlighterColors.TEXT;
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
 public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
@@ -26,9 +25,9 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
     private static final TextAttributesKey[] DOT_KEYS = keys("JMTE_DOT", DOT);
     private static final TextAttributesKey[] KEYWORD_KEYS = keys("JMTE_KEYWORD", KEYWORD);
     private static final TextAttributesKey[] IDENTIFIER_KEYS = keys("JMTE_IDENTIFIER", IDENTIFIER);
-    private static final TextAttributesKey[] STRING_KEYS = keys("JMTE_STRING", STRING);
+    private static final TextAttributesKey[] STRING_KEYS = keys("JMTE_STRING", MARKUP_ATTRIBUTE);
     private static final TextAttributesKey[] COMMENT_KEYS = keys("JMTE_COMMENT", BLOCK_COMMENT);
-    private static final TextAttributesKey[] WHITESPACE_KEYS = keys("JMTE_WHITESPACE", TEXT);
+    private static final TextAttributesKey[] WHITESPACE_KEYS = keys("JMTE_WHITESPACE", TEMPLATE_LANGUAGE_COLOR);
     private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
 
     @Override
@@ -85,6 +84,12 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
 
     private static TextAttributesKey[] keys(String externalName, TextAttributesKey textAttributesKey) {
         return new TextAttributesKey[]{TEMPLATE_LANGUAGE_COLOR, createTextAttributesKey(externalName, textAttributesKey)};
+    }
+    private static TextAttributesKey[] keys(String externalName, TextAttributesKey textAttributesKey1, TextAttributesKey textAttributesKey2) {
+        return new TextAttributesKey[]{TEMPLATE_LANGUAGE_COLOR,
+                createTextAttributesKey(externalName, textAttributesKey1),
+                createTextAttributesKey(externalName, textAttributesKey2)
+        };
     }
 
 }
