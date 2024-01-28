@@ -25,7 +25,7 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
     private static final TextAttributesKey[] DOT_KEYS = keys("JMTE_DOT", DOT);
     private static final TextAttributesKey[] KEYWORD_KEYS = keys("JMTE_KEYWORD", KEYWORD);
     private static final TextAttributesKey[] IDENTIFIER_KEYS = keys("JMTE_IDENTIFIER", IDENTIFIER);
-    private static final TextAttributesKey[] STRING_KEYS = keys("JMTE_STRING", MARKUP_ATTRIBUTE);
+    private static final TextAttributesKey[] STRING_KEYS = keys("JMTE_STRING", STRING);
     private static final TextAttributesKey[] COMMENT_KEYS = keys("JMTE_COMMENT", BLOCK_COMMENT);
     private static final TextAttributesKey[] WHITESPACE_KEYS = keys("JMTE_WHITESPACE", TEMPLATE_LANGUAGE_COLOR);
     private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];

@@ -35,8 +35,8 @@ intellij {
 }
 
 tasks.generateLexer {
-    sourceFile = file("src/main/resources/Jmte.flex")
-    targetClass = "com.linuxgods.kreiger.idea.jmte._JmteLexer"
+    sourceFile = file("src/main/resources/JmteExpression.flex")
+    targetClass = "com.linuxgods.kreiger.idea.jmte._JmteExpressionLexer"
     targetDir = "build/generated/lexer/com/linuxgods/kreiger/idea/jmte"
     dependsOn cleanGenerateLexer
 }

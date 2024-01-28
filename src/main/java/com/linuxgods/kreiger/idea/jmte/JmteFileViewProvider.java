@@ -81,7 +81,7 @@ public class JmteFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
 
     private PsiFile createFileInner(Language lang) {
         ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-        LOGGER.warn("Language: {}, ParserDefinition: {}", lang, parserDefinition);
+        //LOGGER.warn("Language: {}, ParserDefinition: {}", lang, parserDefinition);
         //return new PsiPlainTextFileImpl(this);
         if (parserDefinition == null) return new PsiPlainTextFileImpl(this);
         return parserDefinition.createFile(this);
