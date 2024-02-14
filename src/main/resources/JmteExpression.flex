@@ -9,7 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import java.util.Deque;
 import java.util.ArrayDeque;
-import java.util.HexFormat;import java.util.List;
+import java.util.HexFormat;
+import java.util.List;
 %%
 
 %{
@@ -48,12 +49,14 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 %state INFIX
 %state SUFFIX
 %state UNAFFIXED
+%state IDENTIFIER
 %state FOREACH
 %state FOREACH_REFERENCE
 %state FOREACH_ITEM
 %state FOREACH_SEPARATOR
 %state IF
 %state IF_CONDITION
+%state IF_CONDITION_VALUE
 %state IF_CONDITION_STRING
 %state COMMENT
 %state PARAM
@@ -90,9 +93,15 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <IF_CONDITION> {
     {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
-    "="                                       { yybegin(IF_CONDITION_STRING); return JmteTypes.EQUALS_TOKEN; }
+    "="                                       { yybegin(IF_CONDITION_VALUE); return JmteTypes.EQUALS_TOKEN; }
     "."                                       { return JmteTypes.DOT_TOKEN; }
-    (\\[\\=.\s]|[^=.\s])+                    { return JmteTypes.IDENTIFIER_TOKEN; }
+    (\\[\\=.\s]|[^=.\s])+                     { return JmteTypes.IDENTIFIER_TOKEN; }
+}
+
+<IF_CONDITION_VALUE> {
+    {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
+    [\"\']                                    { yybegin(IF_CONDITION_STRING); }
+    [^\s][^]*                                 { return JmteTypes.STRING_TOKEN; }
 }
 
 <IF_CONDITION_STRING> {
@@ -106,22 +115,22 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <FOREACH_REFERENCE> {
     "."                                       { return JmteTypes.DOT_TOKEN; }
-    (\\[\\.\s]|[^.\s])+                     { return JmteTypes.IDENTIFIER_TOKEN; }
+    (\\[\\.\s]|[^.\s])+                       { return JmteTypes.IDENTIFIER_TOKEN; }
     {WHITE_SPACE}                             { yybegin(FOREACH_ITEM); return TokenType.WHITE_SPACE; }
 }
 
 <FOREACH_ITEM> {
-    (\\\s|[^\s])+                       { return JmteTypes.IDENTIFIER_TOKEN; }
+    (\\\s|[^\s])+                             { return JmteTypes.IDENTIFIER_TOKEN; }
     \s                                        { yybegin(FOREACH_SEPARATOR); return TokenType.WHITE_SPACE; }   
 }
 
 <FOREACH_SEPARATOR> {
-    [^]+                          { return JmteTypes.STRING_TOKEN; }
+    [^]+                                      { return JmteTypes.STRING_TOKEN; }
 }
 
 
 <STRING_EXPRESSION> {
-    [^]+                              {
+    [^]+                                      {
                 String text = yytext().toString();
                 List<String> semicolon = Util.RAW_OUTPUT_MINI_PARSER.split(text, ';', 2);
                 List<String> comma = Util.RAW_OUTPUT_MINI_PARSER.split(semicolon.get(0), ',', 3);
@@ -135,7 +144,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <PREFIX> {
     ","                                       { yybegin(INFIX); return JmteTypes.COMMA_TOKEN; }
-    (\\[\\,]|[^,])+                               { return JmteTypes.STRING_TOKEN; }
+    (\\[\\,]|[^,])+                           { return JmteTypes.STRING_TOKEN; }
 }
 
 <INFIX> {
@@ -151,19 +160,18 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 }
 
 <FORMAT> {
-    [^(]+                                    { return JmteTypes.IDENTIFIER_TOKEN; }
+    [^(]+                                     { return JmteTypes.IDENTIFIER_TOKEN; }
     "("                                       { yypushstate(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
 }
 
 <PARAM> {
     ")"                                       { yypopstate(); return JmteTypes.RIGHT_PAREN_TOKEN; }
-    (\\[\\)]|[^)])+                          { return JmteTypes.STRING_TOKEN; }
+    (\\[\\)]|[^)])+                           { return JmteTypes.STRING_TOKEN; }
 }
 
 <UNAFFIXED> {
     {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
     "("                                       { yypushstate(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
-    "."                                       { return JmteTypes.DOT_TOKEN; }
     ";"                                       { yypushstate(FORMAT); return JmteTypes.SEMI_COLON_TOKEN; }
     (\\[\\(.;\s]|[^\\(.;\s])+                 { return JmteTypes.IDENTIFIER_TOKEN; }
 }
