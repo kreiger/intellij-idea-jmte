@@ -2,88 +2,32 @@ package com.linuxgods.kreiger.idea.jmte;
 
 import com.floreysoft.jmte.Engine;
 import com.floreysoft.jmte.message.ErrorEntry;
+import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Objects;
 
-import static com.linuxgods.kreiger.idea.jmte.JmteLexerTest.Token.token;
-import static com.linuxgods.kreiger.idea.jmte.psi.JmteTypes.*;
+import static com.linuxgods.kreiger.idea.jmte.LexerTestBase.Token.token;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-class JmteLexerTest {
+public class LexerTestBase {
 
-    private JmteLexer lexer;
+    protected Lexer lexer;
 
-    @BeforeEach
-    void setUp() {
-        lexer = new JmteLexer();
-    }
-
-    @Test
-    void test() {
-        start("Hello ${name} World");
-        next(TEMPLATE_DATA_TOKEN, "Hello ");
-        next(START_TOKEN, "${");
-        next(IDENTIFIER_TOKEN, "name");
-        next(END_TOKEN, "}");
-        next(TEMPLATE_DATA_TOKEN, " World");
-        end();
-    }
-    @Test
-    void testUnescaped() {
-        start("Hello \\\\${name} World");
-        next(TEMPLATE_DATA_TOKEN, "Hello \\\\");
-        next(START_TOKEN, "${");
-        next(IDENTIFIER_TOKEN, "name");
-        next(END_TOKEN, "}");
-        next(TEMPLATE_DATA_TOKEN, " World");
-        end();
-    }
-
-    @Test
-    void testEscapedStart() {
-        start("Hello \\${name} World");
-        next(TEMPLATE_DATA_TOKEN, "Hello \\${name} World");
-        end();
-    }
-
-    @Test
-    void testEscapedEnd() {
-        start("Hello ${name\\}World}");
-        next(TEMPLATE_DATA_TOKEN, "Hello ");
-        next(START_TOKEN, "${");
-        next(IDENTIFIER_TOKEN, "name\\}World");
-        next(END_TOKEN, "}");
-        end();
-    }
-
-    @Test
-    void testUnescapedEnd() {
-        start("Hello ${name\\\\} World}");
-        next(TEMPLATE_DATA_TOKEN, "Hello ");
-        next(START_TOKEN, "${");
-        next(IDENTIFIER_TOKEN, "name\\\\");
-        next(END_TOKEN, "}");
-        next(TEMPLATE_DATA_TOKEN, " World}");
-        end();
-    }
-
-    private void end() {
+    protected void end() {
         assertEquals("", lexer.getTokenText());
         assertNull(lexer.getTokenType());
     }
 
-    private void start(String template) {
+    protected void start(String template) {
         List<ErrorEntry> staticErrors = new Engine().getTemplate(template).getStaticErrors();
         if (!staticErrors.isEmpty()) throw new IllegalArgumentException(staticErrors.get(0).formattedMessage.format());
         lexer.start(template);
     }
 
-    private void next(IElementType type, String text) {
+    protected void next(IElementType type, String text) {
         assertEquals(token(type, text), token(lexer.getTokenType(), lexer.getTokenText()));
         int offset = lexer.getTokenStart();
         lexer.advance();

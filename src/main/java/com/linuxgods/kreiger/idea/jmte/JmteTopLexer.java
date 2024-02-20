@@ -24,6 +24,10 @@ public class JmteTopLexer extends LexerBase {
     private int startTokenIndex = -1;
     private int endTokenIndex = -1;
 
+    public JmteTopLexer() {
+        this("${", "}", true);
+    }
+
     public JmteTopLexer(String startToken, String endToken, boolean useEscaping) {
         this.startToken = startToken;
         this.endToken = endToken;
