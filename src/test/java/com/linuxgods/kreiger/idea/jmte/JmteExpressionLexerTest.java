@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.stream.Stream;
 
+import static com.intellij.psi.TokenType.BAD_CHARACTER;
 import static com.intellij.psi.TokenType.WHITE_SPACE;
 import static com.linuxgods.kreiger.idea.jmte.psi.JmteTypes.*;
 import static java.util.stream.Collectors.joining;
@@ -21,7 +22,22 @@ public class JmteExpressionLexerTest extends LexerTestBase {
     void testIf() {
         start("if test ", "end");
         next(IF_KEYWORD_TOKEN, "if");
+        next(WHITE_SPACE, " ");
         next(IDENTIFIER_TOKEN, "test");
+        next(WHITE_SPACE, " ");
+        next(END_KEYWORD_TOKEN, "end");
+        end();
+    }
+
+    @Test
+    void testIfNegated() {
+        start("if ! test ", "end");
+        next(IF_KEYWORD_TOKEN, "if");
+        next(WHITE_SPACE, " ");
+        next(NOT_TOKEN, "!");
+        next(BAD_CHARACTER, " ");
+        next(IDENTIFIER_TOKEN, "test");
+        next(WHITE_SPACE, " ");
         next(END_KEYWORD_TOKEN, "end");
         end();
     }
@@ -35,8 +51,33 @@ public class JmteExpressionLexerTest extends LexerTestBase {
     }
 
     @Test
+    void testForeach() {
+        start("foreach item items  , ", "end");
+        next(FOREACH_KEYWORD_TOKEN, "foreach");
+        next(WHITE_SPACE, " ");
+        next(IDENTIFIER_TOKEN, "item");
+        next(WHITE_SPACE, " ");
+        next(IDENTIFIER_TOKEN, "items");
+        next(WHITE_SPACE, " ");
+        next(STRING_TOKEN, " , ");
+        next(END_KEYWORD_TOKEN, "end");
+        end();
+    }
+
+    @Test
+    void testAnnotation() {
+        start("@receiver arg0 arg1");
+        next(ANNOTATION_KEYWORD_TOKEN, "@");
+        next(IDENTIFIER_TOKEN, "receiver");
+        next(WHITE_SPACE, " ");
+        next(STRING_TOKEN, "arg0 arg1");
+        end();
+    }
+
+    @Test
     void testWhiteSpaceComment() {
         start(" ");
+        next(WHITE_SPACE, " ");
         end();
     }
 
@@ -50,7 +91,7 @@ public class JmteExpressionLexerTest extends LexerTestBase {
 
     @Override protected void next(IElementType type, String text) {
         super.next(type, text);
-        while(lexer.getTokenType() == START_TOKEN || lexer.getTokenType() == END_TOKEN || lexer.getTokenType() == WHITE_SPACE) {
+        while(lexer.getTokenType() == START_TOKEN || lexer.getTokenType() == END_TOKEN) {
             lexer.advance();
         }
     }

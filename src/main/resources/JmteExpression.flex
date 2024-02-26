@@ -43,6 +43,7 @@ LINE_WS_TOKEN=[\ \t\f]
 WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 %state EXPRESSION_END
+%state EXPRESSION_ENDED
 %state STRING_EXPRESSION
 %state FORMAT
 %state PREFIX
@@ -55,17 +56,25 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 %state FOREACH_ITEM
 %state FOREACH_SEPARATOR
 %state IF
+%state IF_NEGATED
 %state IF_CONDITION
 %state IF_CONDITION_VALUE
 %state IF_CONDITION_STRING
+%state ANNOTATION
+%state ANNOTATION_ARGUMENTS
 %state COMMENT
+%state NONCOMMENT
 %state PARAM
 
 %%
 
-
 <YYINITIAL> {
     "--"                                     { yybegin(COMMENT); return JmteTypes.COMMENT_KEYWORD_TOKEN; }
+    [^]                                      { yybegin(NONCOMMENT); yypushback(1); }
+}
+
+<NONCOMMENT> {
+    "@"                                      { yybegin(ANNOTATION); return JmteTypes.ANNOTATION_KEYWORD_TOKEN; }
     "foreach"                                { yybegin(FOREACH); return JmteTypes.FOREACH_KEYWORD_TOKEN; }
     "if"                                     { yybegin(IF); return JmteTypes.IF_KEYWORD_TOKEN; }
     "elseif"                                 { yybegin(IF); return JmteTypes.ELSEIF_KEYWORD_TOKEN; }
@@ -76,8 +85,17 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
     \S                                       { yybegin(STRING_EXPRESSION); yypushback(1); }
 }
 
+<ANNOTATION> {
+    \S+                                      { yybegin(ANNOTATION_ARGUMENTS); return JmteTypes.IDENTIFIER_TOKEN; }
+}
+
+<ANNOTATION_ARGUMENTS> {
+    \s+                                      { return TokenType.WHITE_SPACE; }
+    \S.*                                     { return JmteTypes.STRING_TOKEN; }
+}
+
 <COMMENT> {
-    [^}]+                                    { return JmteTypes.COMMENT_TOKEN; }
+    [^]+                                     { return JmteTypes.COMMENT_TOKEN; }
 }
 
 <EXPRESSION_END> {
@@ -85,9 +103,18 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
     [^]                                      { return TokenType.BAD_CHARACTER; }
 }
 
+<EXPRESSION_ENDED> {
+    [^]                                      { return TokenType.BAD_CHARACTER; }
+}
+
 <IF> {
     {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
-    "!"                                       { yybegin(IF_CONDITION); return JmteTypes.NOT_TOKEN; }
+    "!"                                       { yybegin(IF_NEGATED); return JmteTypes.NOT_TOKEN; }
+    \S                                        { yybegin(IF_CONDITION); yypushback(yylength()); }
+}
+
+<IF_NEGATED> {
+    {WHITE_SPACE}                             { return TokenType.BAD_CHARACTER; }
     \S                                        { yybegin(IF_CONDITION); yypushback(yylength()); }
 }
 
