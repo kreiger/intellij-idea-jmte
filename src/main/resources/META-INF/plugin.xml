@@ -54,6 +54,5 @@
         <syntaxHighlighter key="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteSyntaxHighlighter"/>
         <editorHighlighterProvider filetype="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteEditorHighlighterProvider" />
         <completion.contributor language="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteCompletionContributor"/>
-        <editorActionHandler implementationClass="com.linuxgods.kreiger.idea.jmte.JmteEditorActionHandler" action="EditorEnter"/>
     </extensions>
 </idea-plugin>
