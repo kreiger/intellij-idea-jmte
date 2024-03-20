@@ -91,7 +91,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <ANNOTATION_ARGUMENTS> {
     \s+                                      { return TokenType.WHITE_SPACE; }
-    \S.*                                     { return JmteTypes.STRING_TOKEN; }
+    \S[^]*                                   { return JmteTypes.STRING_TOKEN; }
 }
 
 <COMMENT> {

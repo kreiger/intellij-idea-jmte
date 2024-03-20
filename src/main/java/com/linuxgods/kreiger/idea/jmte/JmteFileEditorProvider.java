@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,8 +45,9 @@ import static java.util.stream.Collectors.toSet;
 
 public class JmteFileEditorProvider implements FileEditorProvider, DumbAware {
     private static final String EDITOR_TYPE_ID = "jmte";
+    public static final Logger LOGGER = LoggerFactory.getLogger(JmteFileEditorProvider.class);
 
-    @Override public boolean accept(@NotNull Project project, @NotNull VirtualFile   file) {
+    @Override public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
         return file.getFileType() instanceof JmteFileType;
     }
 
@@ -84,9 +87,16 @@ public class JmteFileEditorProvider implements FileEditorProvider, DumbAware {
 
         BulkAwareDocumentListener.Simple documentListener = new BulkAwareDocumentListener.Simple() {
             @Override public void afterDocumentChange(@NotNull Document document) {
-                Template template = engine.getTemplate(document.getText());
-                updateTable(table, template);
-                previewDocument.setText(getTransformed(template, model));
+                try {
+                    Template template = engine.getTemplate(document.getText()+" }");
+                    updateTable(table, template);
+                    previewDocument.setText(getTransformed(template, model));
+                } catch (Exception e) {
+                    StringWriter stringWriter = new StringWriter();
+                    e.printStackTrace(new PrintWriter(stringWriter));
+                    previewDocument.setText(stringWriter.toString());
+                    LOGGER.error("Error in JMTE template", e);
+                }
             }
         };
         WriteAction.run(() -> {
@@ -157,7 +167,11 @@ public class JmteFileEditorProvider implements FileEditorProvider, DumbAware {
 
     @Nullable private static String getTransformed(Template template, Map<String, Object> model) {
         try {
-            return Objects.requireNonNull(template.transform(model, Locale.getDefault()));
+            String s = Objects.requireNonNull(template.transform(model, Locale.getDefault()));
+            if (s.length() >= 2) { // Remove trailing " }" added to template to work around bug in JMTE
+                return s.substring(0, s.length() - 2);
+            }
+            return s;
         } catch (Exception e) {
             StringWriter stringWriter = new StringWriter();
             e.printStackTrace(new PrintWriter(stringWriter));
