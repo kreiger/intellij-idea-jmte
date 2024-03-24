@@ -92,7 +92,10 @@ private comma ::= COMMA_TOKEN {name=","}
 
 unaffixed ::= expression defaultValue? {extends=unaffixed}
 
-string ::= STRING_TOKEN?
+string ::= STRING_TOKEN? {
+    extends="com.linuxgods.kreiger.idea.jmte.JmteStringBase"
+    implements="com.intellij.psi.PsiLanguageInjectionHost"
+}
 
 format ::= semi_colon identifier format_params? {name=";format(parameters)"}
 

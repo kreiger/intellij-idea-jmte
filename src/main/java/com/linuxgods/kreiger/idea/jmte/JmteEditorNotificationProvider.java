@@ -3,6 +3,7 @@ package com.linuxgods.kreiger.idea.jmte;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.json.JsonLanguage;
 import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -94,8 +95,9 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
     }
 
     private static boolean potentialTemplate(Language language) {
+        if (language == XMLLanguage.INSTANCE) return true;
+        if (language == HTMLLanguage.INSTANCE) return true;
         if (language instanceof JsonLanguage) return true;
-        if (language instanceof XMLLanguage) return true;
         if (language instanceof PlainTextLanguage) return true;
         return false;
     }

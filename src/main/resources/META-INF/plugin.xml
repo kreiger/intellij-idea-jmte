@@ -17,6 +17,7 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.java</depends>
+    <depends>org.intellij.intelliLang</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteFileType"
@@ -38,5 +39,8 @@
         <syntaxHighlighter key="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteSyntaxHighlighter"/>
         <editorHighlighterProvider filetype="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteEditorHighlighterProvider" />
         <completion.contributor language="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteCompletionContributor"/>
+        <lang.elementManipulator forClass="com.linuxgods.kreiger.idea.jmte.JmteStringBase"
+                                 implementationClass="com.linuxgods.kreiger.idea.jmte.JmteStringElementManipulator" />
     </extensions>
+
 </idea-plugin>

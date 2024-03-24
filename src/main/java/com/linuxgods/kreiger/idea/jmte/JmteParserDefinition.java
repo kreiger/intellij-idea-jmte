@@ -35,7 +35,7 @@ public class JmteParserDefinition implements ParserDefinition {
     }
 
     @Override public @NotNull TokenSet getStringLiteralElements() {
-        return TokenSet.EMPTY;
+        return JmteTokenSets.STRING_LITERALS;
     }
 
     @Override public @NotNull PsiElement createElement(ASTNode node) {
