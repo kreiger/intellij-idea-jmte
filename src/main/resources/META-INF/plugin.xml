@@ -44,6 +44,7 @@
         <localInspection language="JMTE" groupName="JMTE" shortName="JmteReferencesInspection" displayName="JMTE references"
                          level="ERROR" enabledByDefault="true"
                          implementationClass="com.linuxgods.kreiger.idea.jmte.JmteReferencesInspection"/>
+        <fileBasedIndex implementation="com.linuxgods.kreiger.idea.jmte.JmteFileIndex"  />
     </extensions>
 
 </idea-plugin>
