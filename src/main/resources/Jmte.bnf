@@ -71,7 +71,9 @@ private foreach_keyword ::= FOREACH_KEYWORD_TOKEN {name="foreach_tag"}
 
 annotation_tag ::= <<tag annotation>> {name="${@...}"}
 
-annotation ::= annotation_keyword annotation_receiver annotation_arguments
+annotation ::= annotation_keyword annotation_receiver annotation_arguments {
+    extends="com.linuxgods.kreiger.idea.jmte.psi.JmteAnnotationBase"
+}
 
 private annotation_keyword ::= ANNOTATION_KEYWORD_TOKEN {name="@"}
 
@@ -93,7 +95,7 @@ private comma ::= COMMA_TOKEN {name=","}
 unaffixed ::= expression defaultValue? {extends=unaffixed}
 
 string ::= STRING_TOKEN? {
-    extends="com.linuxgods.kreiger.idea.jmte.JmteStringBase"
+    extends="com.linuxgods.kreiger.idea.jmte.psi.JmteStringBase"
     implements="com.intellij.psi.PsiLanguageInjectionHost"
 }
 
@@ -108,15 +110,17 @@ private right_paren ::= RIGHT_PAREN_TOKEN {name=")"}
 
 expression ::= qualifier_expression
 
-qualifier_expression ::= qualified_reference_expression | simple_reference_expression {extends=expression}
+qualifier_expression ::= qualified_expression | simple_reference_expression {extends=expression}
 
 fake reference_expression ::= qualifier_expression? DOT_TOKEN identifier {extends=qualifier_expression}
 
-qualified_reference_expression ::= qualifier_expression DOT_TOKEN identifier {extends=reference_expression elementType=reference_expression}
+qualified_expression ::= qualifier_expression DOT_TOKEN identifier {extends=reference_expression elementType=reference_expression}
 
 simple_reference_expression ::= identifier {elementType=reference_expression}
 
-identifier ::= IDENTIFIER_TOKEN
+identifier ::= IDENTIFIER_TOKEN {
+    extends="com.linuxgods.kreiger.idea.jmte.psi.JmteIdentifierBase"
+}
 
 private meta tag ::= start_token <<t>> end_token {name="tag"}
 private start_token ::= START_TOKEN {name="${"}

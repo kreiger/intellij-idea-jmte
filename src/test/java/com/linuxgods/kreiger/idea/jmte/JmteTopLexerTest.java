@@ -62,4 +62,17 @@ class JmteTopLexerTest extends LexerTestBase {
         end();
     }
 
+    @Test
+    void testIf() {
+        start("Hello ${if name} World${end}");
+        next(TEMPLATE_DATA_TOKEN, "Hello ");
+        next(START_TOKEN, "${");
+        next(EXPRESSION_TOKEN, "if name");
+        next(END_TOKEN, "}");
+        next(TEMPLATE_DATA_TOKEN, " World");
+        next(START_TOKEN, "${");
+        next(EXPRESSION_TOKEN, "end");
+        next(END_TOKEN, "}");
+        end();
+    }
 }

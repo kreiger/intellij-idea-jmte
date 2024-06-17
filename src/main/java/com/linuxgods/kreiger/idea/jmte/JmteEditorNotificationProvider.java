@@ -8,14 +8,15 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.file.exclude.OverrideFileTypeManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
@@ -26,9 +27,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
+
+import static org.jetbrains.jps.model.java.JavaResourceRootType.*;
 
 public class JmteEditorNotificationProvider implements EditorNotificationProvider {
     private static final Key<Boolean> DISABLE_NOTIFICATION = Key.create("jmte.file.type.notification.disable");
@@ -41,8 +45,9 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
         if (!(file.getFileType() instanceof LanguageFileType fileType)) return CONST_NULL;
         Language language = fileType.getLanguage();
         if (!potentialTemplate(language)) return CONST_NULL;
-        VirtualFile contentRoot = ProjectFileIndex.getInstance(project).getContentRootForFile(file);
-        if (contentRoot == null || contentRoot.equals(file.getParent())) return CONST_NULL;
+        VirtualFile parent = file.getParent();
+        if (parent == null) return CONST_NULL;
+        if (!underResourceRoot(project, parent)) return CONST_NULL;
         if (!looksLikeTemplate(file)) return CONST_NULL;
 
         return fileEditor -> {
@@ -59,6 +64,16 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
             panel.createActionLabel("Override type for this file", () -> {
                 OverrideFileTypeManager.getInstance().addFile(file, JmteFileType.INSTANCE);
             });
+            List<VirtualFile> otherChildren = findSiblingFilesOfType(parent, file, fileType);
+            if (!otherChildren.isEmpty()) {
+                panel.createActionLabel("Override type for all " + fileType.getDisplayName() + " files in " + file.getParent().getName(), () -> {
+                    for (VirtualFile child : file.getParent().getChildren()) {
+                        if (child.getFileType() == fileType) {
+                            OverrideFileTypeManager.getInstance().addFile(child, JmteFileType.INSTANCE);
+                        }
+                    }
+                });
+            }
             String ext = file.getExtension();
             if (ext == null) {
                 return panel;
@@ -79,6 +94,31 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
             });
             return panel;
         };
+    }
+
+    private static @NotNull List<VirtualFile> findSiblingFilesOfType(VirtualFile parent, VirtualFile file, LanguageFileType fileType) {
+        List<VirtualFile> otherChildren = Stream.of(parent.getChildren())
+                .filter(child -> !file.equals(child))
+                .filter(child -> child.getFileType() == fileType)
+                .toList();
+        return otherChildren;
+    }
+
+    private static boolean underResourceRoot(@NotNull Project project, @NotNull VirtualFile file) {
+        ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
+        Module module = projectFileIndex.getModuleForFile(file);
+        if (module == null) return false;
+        ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
+        for (ContentEntry contentEntry : contentEntries) {
+            for (SourceFolder sourceFolder : contentEntry.getSourceFolders(Set.of(RESOURCE, TEST_RESOURCE))) {
+                VirtualFile resourcesRoot = sourceFolder.getFile();
+                if (resourcesRoot == null) continue;
+                if (VfsUtilCore.isAncestor(resourcesRoot, file, true)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean looksLikeTemplate(VirtualFile file) {

@@ -3,6 +3,7 @@ package com.linuxgods.kreiger.idea.jmte;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulator;
 import com.intellij.util.IncorrectOperationException;
+import com.linuxgods.kreiger.idea.jmte.psi.JmteStringBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

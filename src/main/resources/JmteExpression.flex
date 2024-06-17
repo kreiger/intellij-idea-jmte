@@ -176,6 +176,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <INFIX> {
     {WHITE_SPACE}                             { return TokenType.BAD_CHARACTER; }
+    "."                                       { return JmteTypes.DOT_TOKEN; }
     ","                                       { yybegin(SUFFIX); return JmteTypes.COMMA_TOKEN; }
     "("                                       { yypushstate(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
     (\\[\\.,(\s]|[^.,(\s])+                   { return JmteTypes.IDENTIFIER_TOKEN; }
@@ -199,6 +200,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 <UNAFFIXED> {
     {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
     "("                                       { yypushstate(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
+    "."                                       { return JmteTypes.DOT_TOKEN; }
     ";"                                       { yypushstate(FORMAT); return JmteTypes.SEMI_COLON_TOKEN; }
     (\\[\\(.;\s]|[^\\(.;\s])+                 { return JmteTypes.IDENTIFIER_TOKEN; }
 }
