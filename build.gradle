@@ -28,8 +28,8 @@ intellij {
                'PsiViewer:233.2',
               // 'org.jetbrains.plugins.go-template:232.9921.89',
               // 'com.dmarcotte.handlebars:232.8660.88',
-              // 'org.jusecase.jte-intellij:2.1.2',
-              'com.intellij.freemarker', 'com.intellij.velocity'
+               'org.jusecase.jte-intellij:2.1.2',
+               'com.intellij.freemarker', 'com.intellij.velocity'
     ]
     updateSinceUntilBuild = false
 }
