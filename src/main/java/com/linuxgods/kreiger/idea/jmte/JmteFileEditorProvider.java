@@ -2,19 +2,13 @@ package com.linuxgods.kreiger.idea.jmte;
 
 import com.floreysoft.jmte.Engine;
 import com.floreysoft.jmte.template.Template;
-import com.floreysoft.jmte.template.VariableDescription;
 import com.intellij.diff.util.FileEditorBase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.EditorActionManagerImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.JComponentFileEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -32,13 +26,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.io.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 import static java.util.stream.Collectors.toSet;
