@@ -127,13 +127,14 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <IF_CONDITION_VALUE> {
     {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
-    [\"\']                                    { yybegin(IF_CONDITION_STRING); }
-    [^\s][^]*                                 { return JmteTypes.STRING_TOKEN; }
+    [\"\']                                    { yybegin(IF_CONDITION_STRING); return JmteTypes.QUOTE_TOKEN; }
+    [^\s]                                     { yybegin(NONCOMMENT); yypushback(yylength()); }
 }
 
 <IF_CONDITION_STRING> {
+    [^]+[^\s]                                 { yypushback(1); return JmteTypes.STRING_TOKEN; }
+    [^\s]                                     { return JmteTypes.QUOTE_TOKEN; }
     {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
-    [^\s][^]*                                 { return JmteTypes.STRING_TOKEN; }
 }
 
 <FOREACH> {

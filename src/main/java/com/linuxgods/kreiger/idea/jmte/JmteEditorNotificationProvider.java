@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable;
+import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
@@ -30,6 +31,8 @@ import com.intellij.ui.EditorNotifications;
 import com.linuxgods.kreiger.idea.jmte.psi.JmteFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,13 +73,17 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
 
             EditorNotificationPanel panel = new EditorNotificationPanel();
             panel.setText("This file looks like a JMTE template containing "+fileType.getDisplayName());
+
             panel.createActionLabel("Override type for this file", () -> {
                 OverrideFileTypeManager.getInstance().addFile(file, JmteFileType.INSTANCE);
+                TemplateDataLanguageMappings.getInstance(project).setMapping(file, fileType.getLanguage());
+                /*
                 TemplateDataLanguagePatterns templateDataLanguagePatterns = TemplateDataLanguagePatterns.getInstance();
                 FileTypeAssocTable<Language> assocTable = templateDataLanguagePatterns.getAssocTable();
                 LOGGER.warn("assocTable {}", assocTable.findAssociatedFileType(file.getName()));
                 assocTable.addAssociation(new ExactFileNameMatcher(file.getName()), fileType.getLanguage());
                 templateDataLanguagePatterns.setAssocTable(assocTable);
+                */
                 TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
                 ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
                     configurable.selectFile(file);
@@ -142,19 +149,8 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
 
     private static boolean underResourceRoot(@NotNull Project project, @NotNull VirtualFile file) {
         ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
-        Module module = projectFileIndex.getModuleForFile(file);
-        if (module == null) return false;
-        ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-        for (ContentEntry contentEntry : contentEntries) {
-            for (SourceFolder sourceFolder : contentEntry.getSourceFolders(Set.of(RESOURCE, TEST_RESOURCE))) {
-                VirtualFile resourcesRoot = sourceFolder.getFile();
-                if (resourcesRoot == null) continue;
-                if (VfsUtilCore.isAncestor(resourcesRoot, file, true)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        JpsModuleSourceRootType<?> sourceRootType = projectFileIndex.getContainingSourceRootType(file);
+        return sourceRootType instanceof JavaResourceRootType;
     }
 
     private boolean looksLikeTemplate(VirtualFile file) {
@@ -162,7 +158,7 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
             boolean foundStart = false;
             int b;
             while ((b = in.read()) != -1) {
-                if (b == '$' && in.read() == '{') foundStart = true;
+                if (!foundStart && b == '$' && in.read() == '{') foundStart = true;
                 else if (b == '}' && foundStart) return true;
                 else if (b == '\n') foundStart = false;
             }

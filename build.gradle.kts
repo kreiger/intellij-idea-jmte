@@ -25,6 +25,7 @@ dependencies {
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.intellij.intelliLang")
         bundledPlugin("com.intellij.modules.json")
+        plugin( "PsiViewer:252.23892.248")
     }
 }
 
@@ -32,7 +33,6 @@ dependencies {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellijPlatform {
     pluginConfiguration {
-        version = "2023.3.6"
     }
     /*
     plugins = ['com.intellij.java', 'org.intellij.intelliLang',

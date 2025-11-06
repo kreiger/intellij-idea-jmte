@@ -45,7 +45,13 @@ if ::= if_keyword condition
 
 private if_keyword ::= IF_KEYWORD_TOKEN {name="if_tag"}
 
-condition ::= NOT_TOKEN? (expression (EQUALS_TOKEN string)?)
+quoted_string ::= QUOTE_TOKEN string? QUOTE_TOKEN
+
+condition_operand_tag ::= annotation | if | else_keyword | elseif | foreach | end_tag | string_expression
+
+condition_operand ::= quoted_string | condition_operand_tag
+
+condition ::= NOT_TOKEN? (expression (EQUALS_TOKEN condition_operand)?)
 
 else_tag ::= <<tag else_keyword>> {name="${else}"}
 
@@ -81,10 +87,12 @@ private annotation_receiver ::= identifier
 
 private annotation_arguments ::= string
 
-string_tag ::= <<tag ((affixed | unaffixed) format?) >> {
+string_tag ::= <<tag string_expression >> {
     methods=[prefix="/[0]/affixed/string[0]" suffix="/[0]/affixed/string[1]"]
     name="${...}"
 }
+
+private string_expression ::= (affixed | unaffixed) format?
 
 private semi_colon ::= SEMI_COLON_TOKEN {name=";"}
 
