@@ -21,7 +21,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteFileType"
-                  fieldName="INSTANCE" extensions="mte" language="JMTE"/>
+                  fieldName="INSTANCE" extensions="jmte;mte" language="JMTE"/>
 
         <lang.parserDefinition language="JMTE"
                                implementationClass="com.linuxgods.kreiger.idea.jmte.JmteParserDefinition"/>
@@ -45,6 +45,9 @@
                          level="ERROR" enabledByDefault="true"
                          implementationClass="com.linuxgods.kreiger.idea.jmte.JmteReferencesInspection"/>
         <fileBasedIndex implementation="com.linuxgods.kreiger.idea.jmte.JmteFileIndex"  />
+        <additionalTextAttributes scheme="Default" file="colorSchemes/JmteDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="colorSchemes/JmteDarcula.xml"/>
+        <colorSettingsPage implementation="com.linuxgods.kreiger.idea.jmte.JmteColorSettingsPage" />
     </extensions>
 
 </idea-plugin>

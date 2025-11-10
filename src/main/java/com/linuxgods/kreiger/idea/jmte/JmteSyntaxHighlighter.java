@@ -16,19 +16,20 @@ import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAtt
 
 public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
 
-    private static final TextAttributesKey[] BAD_CHAR_KEYS = keys("JMTE_BAD_CHARACTER", BAD_CHARACTER);
-    private static final TextAttributesKey[] MARKUP_KEYS = keys("JMTE_MARKUP", KEYWORD);
-    private static final TextAttributesKey[] OPERATION_KEYS = keys("JMTE_OPERATION", OPERATION_SIGN);
-    private static final TextAttributesKey[] COMMA_KEYS = keys("JMTE_COMMA", COMMA);
-    private static final TextAttributesKey[] SEMICOLON_KEYS = keys("JMTE_SEMICOLON", SEMICOLON);
-    private static final TextAttributesKey[] PAREN_KEYS = keys("JMTE_PARENTHESES", PARENTHESES);
-    private static final TextAttributesKey[] DOT_KEYS = keys("JMTE_DOT", DOT);
-    private static final TextAttributesKey[] KEYWORD_KEYS = keys("JMTE_KEYWORD", KEYWORD);
-    private static final TextAttributesKey[] IDENTIFIER_KEYS = keys("JMTE_IDENTIFIER", IDENTIFIER);
-    private static final TextAttributesKey[] STRING_KEYS = keys("JMTE_STRING", STRING);
-    private static final TextAttributesKey[] COMMENT_KEYS = keys("JMTE_COMMENT", BLOCK_COMMENT);
-    private static final TextAttributesKey[] WHITESPACE_KEYS = keys("JMTE_WHITESPACE", TEMPLATE_LANGUAGE_COLOR);
-    private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
+    static final TextAttributesKey[] BAD_CHAR_KEYS = keys("JMTE_BAD_CHARACTER", BAD_CHARACTER);
+    static final TextAttributesKey[] MARKUP_KEYS = keys("JMTE_MARKUP", KEYWORD);
+    static final TextAttributesKey[] OPERATION_KEYS = keys("JMTE_OPERATION", OPERATION_SIGN);
+    static final TextAttributesKey[] COMMA_KEYS = keys("JMTE_COMMA", COMMA);
+    static final TextAttributesKey[] SEMICOLON_KEYS = keys("JMTE_SEMICOLON", SEMICOLON);
+    static final TextAttributesKey[] PAREN_KEYS = keys("JMTE_PARENTHESES", PARENTHESES);
+    static final TextAttributesKey[] DOT_KEYS = keys("JMTE_DOT", DOT);
+    static final TextAttributesKey[] KEYWORD_KEYS = keys("JMTE_KEYWORD", KEYWORD);
+    static final TextAttributesKey[] IDENTIFIER_KEYS = keys("JMTE_IDENTIFIER", IDENTIFIER);
+    static final TextAttributesKey[] STRING_KEYS = keys("JMTE_STRING", STRING);
+    static final TextAttributesKey[] USER_DEFINED_KEYS = keys("JMTE_USER_DEFINED", METADATA);
+    static final TextAttributesKey[] COMMENT_KEYS = keys("JMTE_COMMENT", BLOCK_COMMENT);
+    static final TextAttributesKey[] WHITESPACE_KEYS = keys("JMTE_WHITESPACE", TEMPLATE_LANGUAGE_COLOR);
+    static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
 
     @Override
     public @NotNull Lexer getHighlightingLexer() {
@@ -79,6 +80,10 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
         if (tokenType.equals(TokenType.BAD_CHARACTER)) {
             return BAD_CHAR_KEYS;
         }
+        if (tokenType.equals(JmteTypes.USER_DEFINED_TOKEN)) {
+            return USER_DEFINED_KEYS;
+        }
+
         return EMPTY_KEYS;
     }
 

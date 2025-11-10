@@ -80,14 +80,14 @@ public class JmteFileEditorProvider implements FileEditorProvider, DumbAware {
         BulkAwareDocumentListener.Simple documentListener = new BulkAwareDocumentListener.Simple() {
             @Override public void afterDocumentChange(@NotNull Document document) {
                 try {
-                    Template template = engine.getTemplate(document.getText()+" }");
+                    Template template = engine.getTemplate(document.getText());
                     updateTable(table, template);
                     previewDocument.setText(getTransformed(template, model));
                 } catch (Exception e) {
                     StringWriter stringWriter = new StringWriter();
                     e.printStackTrace(new PrintWriter(stringWriter));
                     previewDocument.setText(stringWriter.toString());
-                    LOGGER.error("Error in JMTE template", e);
+                    //LOGGER.error("Error in JMTE template", e);
                 }
             }
         };
@@ -159,11 +159,7 @@ public class JmteFileEditorProvider implements FileEditorProvider, DumbAware {
 
     @Nullable private static String getTransformed(Template template, Map<String, Object> model) {
         try {
-            String s = Objects.requireNonNull(template.transform(model, Locale.getDefault()));
-            if (s.length() >= 2) { // Remove trailing " }" added to template to work around bug in JMTE
-                return s.substring(0, s.length() - 2);
-            }
-            return s;
+            return Objects.requireNonNull(template.transform(model, Locale.getDefault()));
         } catch (Exception e) {
             StringWriter stringWriter = new StringWriter();
             e.printStackTrace(new PrintWriter(stringWriter));

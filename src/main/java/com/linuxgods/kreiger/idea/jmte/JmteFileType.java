@@ -26,7 +26,7 @@ public class JmteFileType extends LanguageFileType implements TemplateLanguageFi
     }
 
     @Override public @NlsSafe @NotNull String getDefaultExtension() {
-        return "tpl";
+        return "jmte";
     }
 
     @Override public Icon getIcon() {

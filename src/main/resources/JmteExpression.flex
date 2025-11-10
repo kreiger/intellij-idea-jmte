@@ -64,6 +64,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 %state ANNOTATION_ARGUMENTS
 %state COMMENT
 %state NONCOMMENT
+%state DEFAULT_VALUE
 %state PARAM
 
 %%
@@ -92,7 +93,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <ANNOTATION_ARGUMENTS> {
     \s+                                      { return TokenType.WHITE_SPACE; }
-    \S[^]*                                   { return JmteTypes.STRING_TOKEN; }
+    \S[^]*                                   { return JmteTypes.USER_DEFINED_TOKEN; }
 }
 
 <COMMENT> {
@@ -182,7 +183,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
     {WHITE_SPACE}                             { return TokenType.BAD_CHARACTER; }
     "."                                       { return JmteTypes.DOT_TOKEN; }
     ","                                       { yybegin(SUFFIX); return JmteTypes.COMMA_TOKEN; }
-    "("                                       { yypushstate(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
+    "("                                       { yypushstate(DEFAULT_VALUE); return JmteTypes.LEFT_PAREN_TOKEN; }
     (\\[\\.,(\s]|[^.,(\s])+                   { return JmteTypes.IDENTIFIER_TOKEN; }
 }
 
@@ -196,14 +197,19 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
     "("                                       { yypushstate(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
 }
 
-<PARAM> {
+<DEFAULT_VALUE> {
     ")"                                       { yypopstate(); return JmteTypes.RIGHT_PAREN_TOKEN; }
     (\\[\\)]|[^)])+                           { return JmteTypes.STRING_TOKEN; }
 }
 
+<PARAM> {
+    ")"                                       { yypopstate(); return JmteTypes.RIGHT_PAREN_TOKEN; }
+    (\\[\\)]|[^)])+                           { return JmteTypes.USER_DEFINED_TOKEN; }
+}
+
 <UNAFFIXED> {
     {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
-    "("                                       { yypushstate(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
+    "("                                       { yypushstate(DEFAULT_VALUE); return JmteTypes.LEFT_PAREN_TOKEN; }
     "."                                       { return JmteTypes.DOT_TOKEN; }
     ";"                                       { yypushstate(FORMAT); return JmteTypes.SEMI_COLON_TOKEN; }
     (\\[\\(.;\s]|[^\\(.;\s])+                 { return JmteTypes.IDENTIFIER_TOKEN; }

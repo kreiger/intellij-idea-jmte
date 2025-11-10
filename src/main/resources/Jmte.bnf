@@ -86,14 +86,14 @@ private annotation_keyword ::= ANNOTATION_KEYWORD_TOKEN {name="@"}
 
 private annotation_receiver ::= identifier
 
-private annotation_arguments ::= string
+private annotation_arguments ::= USER_DEFINED_TOKEN
 
 string_tag ::= <<tag string_expression >> {
     methods=[prefix="/[0]/affixed/string[0]" suffix="/[0]/affixed/string[1]"]
     name="${...}"
 }
 
-private string_expression ::= (affixed | unaffixed) format? { pin=1 }
+private string_expression ::= (affixed | unaffixed) format? { pin=1 recoverWhile=not_end_token }
 
 private semi_colon ::= SEMI_COLON_TOKEN {name=";"}
 
@@ -112,7 +112,7 @@ format ::= semi_colon identifier format_params? {name=";format(parameters)"}
 
 defaultValue ::= left_paren string right_paren {name="(default value)"}
 
-format_params ::= left_paren string right_paren {name="(format parameters)"}
+format_params ::= left_paren USER_DEFINED_TOKEN right_paren {name="(format parameters)"}
 
 private left_paren ::= LEFT_PAREN_TOKEN {name="("}
 private right_paren ::= RIGHT_PAREN_TOKEN {name=")"}
