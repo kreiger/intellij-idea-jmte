@@ -43,7 +43,6 @@ LINE_WS_TOKEN=[\ \t\f]
 WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 %state EXPRESSION_END
-%state EXPRESSION_ENDED
 %state STRING_EXPRESSION
 %state FORMAT
 %state PREFIX
@@ -59,7 +58,8 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 %state IF_NEGATED
 %state IF_CONDITION
 %state IF_CONDITION_VALUE
-%state IF_CONDITION_STRING
+%state IF_CONDITION_SQ_STRING
+%state IF_CONDITION_DQ_STRING
 %state ANNOTATION
 %state ANNOTATION_ARGUMENTS
 %state COMMENT
@@ -81,6 +81,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
     "else"                                   { yybegin(EXPRESSION_END); return JmteTypes.ELSE_KEYWORD_TOKEN; }
     "end"                                    { yybegin(EXPRESSION_END); return JmteTypes.END_KEYWORD_TOKEN; }
     {WHITE_SPACE}                            { return TokenType.WHITE_SPACE; }
+    \w+"."                                   { yybegin(STRING_EXPRESSION); yypushback(yylength()); }
     \w+                                      { yybegin(STRING_EXPRESSION); yypushback(yylength()); }
     \S                                       { yybegin(STRING_EXPRESSION); yypushback(1); }
 }
@@ -100,11 +101,6 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <EXPRESSION_END> {
     {WHITE_SPACE}                            { return TokenType.WHITE_SPACE; }
-    [^]                                      { return TokenType.BAD_CHARACTER; }
-}
-
-<EXPRESSION_ENDED> {
-    [^]                                      { return TokenType.BAD_CHARACTER; }
 }
 
 <IF> {
@@ -127,14 +123,21 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <IF_CONDITION_VALUE> {
     {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
-    [\"\']                                    { yybegin(IF_CONDITION_STRING); return JmteTypes.QUOTE_TOKEN; }
+    "'"                                       { yybegin(IF_CONDITION_SQ_STRING); return JmteTypes.QUOTE_TOKEN; }
+    "\""                                      { yybegin(IF_CONDITION_DQ_STRING); return JmteTypes.QUOTE_TOKEN; }
     [^\s]                                     { yybegin(NONCOMMENT); yypushback(yylength()); }
 }
 
-<IF_CONDITION_STRING> {
-    [^]+[^\s]                                 { yypushback(1); return JmteTypes.STRING_TOKEN; }
-    [^\s]                                     { return JmteTypes.QUOTE_TOKEN; }
-    {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
+<IF_CONDITION_SQ_STRING> {
+    [^\']+[\'\"]                              { yypushback(1); return JmteTypes.STRING_TOKEN; }
+    "\""                                      { yybegin(EXPRESSION_END); return TokenType.BAD_CHARACTER; }
+    "'"                                       { yybegin(EXPRESSION_END); return JmteTypes.QUOTE_TOKEN; }
+}
+
+<IF_CONDITION_DQ_STRING> {
+    [^\"]+[\'\"]                              { yypushback(1); return JmteTypes.STRING_TOKEN; }
+    "\""                                      { yybegin(EXPRESSION_END); return JmteTypes.QUOTE_TOKEN; }
+    "'"                                       { yybegin(EXPRESSION_END); return TokenType.BAD_CHARACTER; }
 }
 
 <FOREACH> {
