@@ -27,7 +27,7 @@ content ::= TEMPLATE_DATA_TOKEN { consumeTokenMethod="consumeTokenFast" }
 
 comment_tag ::= <<tag comment?>> {name="${--...}"}
 
-comment ::= comment_keyword comment_token
+comment ::= comment_keyword comment_token { pin=1 }
 
 private comment_keyword ::= COMMENT_KEYWORD_TOKEN {name="--"}
 
@@ -37,11 +37,11 @@ end_tag ::= <<tag end_keyword>> {name="${end}"}
 
 private end_keyword ::= END_KEYWORD_TOKEN {name="end_tag"}
 
-if_block ::= if_tag content_or_template* (elseif_tag content_or_template*)* (else_tag content_or_template*)? end_tag {pin=1}
+if_block ::= if_tag content_or_template* (elseif_tag content_or_template*)* (else_tag content_or_template*)? end_tag
 
 if_tag ::= <<tag if>> {name="${if ...}"}
 
-if ::= if_keyword condition
+if ::= if_keyword condition { pin=1 recoverWhile=not_end_token }
 
 private if_keyword ::= IF_KEYWORD_TOKEN {name="if_tag"}
 
@@ -63,11 +63,11 @@ elseif ::= elseif_keyword condition
 
 private elseif_keyword ::= ELSEIF_KEYWORD_TOKEN {name="elseif_tag"}
 
-foreach_block ::= foreach_tag content_or_template* end_tag {pin=1}
+foreach_block ::= foreach_tag content_or_template* end_tag
 
 foreach_tag ::= <<tag foreach >> {name="${foreach ...}"}
 
-foreach ::= foreach_keyword foreach_parameters
+foreach ::= foreach_keyword foreach_parameters { pin=1 recoverWhile=not_end_token }
 
 foreach_parameters ::= expression (identifier foreach_separator)?
 
@@ -79,6 +79,7 @@ annotation_tag ::= <<tag annotation>> {name="${@...}"}
 
 annotation ::= annotation_keyword annotation_receiver annotation_arguments {
     extends="com.linuxgods.kreiger.idea.jmte.psi.JmteAnnotationBase"
+    pin=1
 }
 
 private annotation_keyword ::= ANNOTATION_KEYWORD_TOKEN {name="@"}
@@ -92,7 +93,7 @@ string_tag ::= <<tag string_expression >> {
     name="${...}"
 }
 
-private string_expression ::= (affixed | unaffixed) format?
+private string_expression ::= (affixed | unaffixed) format? { pin=1 }
 
 private semi_colon ::= SEMI_COLON_TOKEN {name=";"}
 
@@ -131,5 +132,6 @@ identifier ::= IDENTIFIER_TOKEN {
 }
 
 private meta tag ::= start_token <<t>> end_token {name="tag"}
-private start_token ::= START_TOKEN {name="${"}
-private end_token ::= END_TOKEN {name="}"}
+private start_token ::= START_TOKEN {name="${" }
+private end_token ::= END_TOKEN {name="}" }
+private not_end_token ::= !END_TOKEN
