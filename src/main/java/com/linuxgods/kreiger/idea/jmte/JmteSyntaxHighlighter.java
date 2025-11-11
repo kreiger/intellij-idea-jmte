@@ -19,13 +19,11 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
     static final TextAttributesKey[] BAD_CHAR_KEYS = keys("JMTE_BAD_CHARACTER", BAD_CHARACTER);
     static final TextAttributesKey[] MARKUP_KEYS = keys("JMTE_MARKUP", KEYWORD);
     static final TextAttributesKey[] OPERATION_KEYS = keys("JMTE_OPERATION", OPERATION_SIGN);
-    static final TextAttributesKey[] SEMICOLON_KEYS = keys("JMTE_SEMICOLON", SEMICOLON);
-    static final TextAttributesKey[] PAREN_KEYS = keys("JMTE_PARENTHESES", PARENTHESES);
     static final TextAttributesKey[] DOT_KEYS = keys("JMTE_DOT", DOT);
     static final TextAttributesKey[] KEYWORD_KEYS = keys("JMTE_KEYWORD", KEYWORD);
     static final TextAttributesKey[] IDENTIFIER_KEYS = keys("JMTE_IDENTIFIER", IDENTIFIER);
     static final TextAttributesKey[] STRING_KEYS = keys("JMTE_STRING", STRING);
-    static final TextAttributesKey[] USER_DEFINED_KEYS = keys("JMTE_USER_DEFINED", METADATA);
+    static final TextAttributesKey[] USER_DEFINED_KEYS = keys("JMTE_USER_DEFINED", MARKUP_ENTITY);
     static final TextAttributesKey[] COMMENT_KEYS = keys("JMTE_COMMENT", BLOCK_COMMENT);
     static final TextAttributesKey[] WHITESPACE_KEYS = keys("JMTE_WHITESPACE", TEMPLATE_LANGUAGE_COLOR);
     static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
@@ -37,8 +35,8 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
 
     @Override
     public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
-        TextAttributesKey[] parenKeys = getTextAttributesKeys(tokenType);
-        if (parenKeys != null) return parenKeys;
+        TextAttributesKey[] keys = getTextAttributesKeys(tokenType);
+        if (keys != null) return keys;
         return EMPTY_KEYS;
     }
 
@@ -46,14 +44,8 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
         if (tokenType.equals(TokenType.WHITE_SPACE)) {
             return WHITESPACE_KEYS;
         }
-        if (tokenType.equals(JmteTypes.LEFT_PAREN_TOKEN) || tokenType.equals(JmteTypes.RIGHT_PAREN_TOKEN)) {
-            return PAREN_KEYS;
-        }
         if (tokenType.equals(JmteTypes.DOT_TOKEN)) {
             return DOT_KEYS;
-        }
-        if (tokenType.equals(JmteTypes.SEMI_COLON_TOKEN)) {
-            return SEMICOLON_KEYS;
         }
         if (tokenType.equals(JmteTypes.EQUALS_TOKEN)) {
             return OPERATION_KEYS;
@@ -70,7 +62,7 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
         if (tokenType.equals(JmteTypes.IDENTIFIER_TOKEN)) {
             return IDENTIFIER_KEYS;
         }
-        if (tokenType.equals(JmteTypes.STRING_TOKEN)) {
+        if (JmteTokenSets.STRING_LITERALS.contains(tokenType)) {
             return STRING_KEYS;
         }
         if (tokenType.equals(TokenType.BAD_CHARACTER)) {
@@ -85,12 +77,6 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
 
     private static TextAttributesKey[] keys(String externalName, TextAttributesKey textAttributesKey) {
         return new TextAttributesKey[]{TEMPLATE_LANGUAGE_COLOR, createTextAttributesKey(externalName, textAttributesKey)};
-    }
-    private static TextAttributesKey[] keys(String externalName, TextAttributesKey textAttributesKey1, TextAttributesKey textAttributesKey2) {
-        return new TextAttributesKey[]{TEMPLATE_LANGUAGE_COLOR,
-                createTextAttributesKey(externalName, textAttributesKey1),
-                createTextAttributesKey(externalName, textAttributesKey2)
-        };
     }
 
 }

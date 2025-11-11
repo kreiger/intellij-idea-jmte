@@ -78,7 +78,6 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
     "@"                                      { yybegin(ANNOTATION); return JmteTypes.ANNOTATION_KEYWORD_TOKEN; }
     "foreach"                                { yybegin(FOREACH); return JmteTypes.FOREACH_KEYWORD_TOKEN; }
     "if"                                     { yybegin(IF); return JmteTypes.IF_KEYWORD_TOKEN; }
-    "elseif"                                 { yybegin(IF); return JmteTypes.ELSEIF_KEYWORD_TOKEN; }
     "else"                                   { yybegin(EXPRESSION_END); return JmteTypes.ELSE_KEYWORD_TOKEN; }
     "end"                                    { yybegin(EXPRESSION_END); return JmteTypes.END_KEYWORD_TOKEN; }
     {WHITE_SPACE}                            { return TokenType.WHITE_SPACE; }
@@ -157,12 +156,12 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 }
 
 <FOREACH_SEPARATOR> {
-    [^]+                                      { return JmteTypes.STRING_TOKEN; }
+    [^]+                                      { return JmteTypes.TEMPLATE_DATA_TOKEN; }
 }
 
 
 <STRING_EXPRESSION> {
-    [^]+                                      {
+    [^]+   {
                 String text = yytext().toString();
                 List<String> semicolon = Util.RAW_OUTPUT_MINI_PARSER.split(text, ';', 2);
                 List<String> comma = Util.RAW_OUTPUT_MINI_PARSER.split(semicolon.get(0), ',', 3);
@@ -199,7 +198,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <DEFAULT_VALUE> {
     ")"                                       { yypopstate(); return JmteTypes.RIGHT_PAREN_TOKEN; }
-    (\\[\\)]|[^)])+                           { return JmteTypes.STRING_TOKEN; }
+    (\\[\\)]|[^)])+                           { return JmteTypes.TEMPLATE_DATA_TOKEN; }
 }
 
 <PARAM> {

@@ -37,7 +37,7 @@ end_tag ::= <<tag end_keyword>> {name="${end}"}
 
 private end_keyword ::= END_KEYWORD_TOKEN {name="end_tag"}
 
-if_block ::= if_tag content_or_template* (elseif_tag content_or_template*)* (else_tag content_or_template*)? end_tag
+if_block ::= if_tag content_or_template* (else_tag content_or_template*)? end_tag
 
 if_tag ::= <<tag if>> {name="${if ...}"}
 
@@ -47,7 +47,7 @@ private if_keyword ::= IF_KEYWORD_TOKEN {name="if_tag"}
 
 quoted_string ::= QUOTE_TOKEN string? QUOTE_TOKEN
 
-condition_operand_tag ::= annotation | if | else_keyword | elseif | foreach | end_tag | string_expression
+condition_operand_tag ::= annotation | if | else_keyword | foreach | end_tag | string_expression
 
 condition_operand ::= quoted_string | condition_operand_tag
 
@@ -57,12 +57,6 @@ else_tag ::= <<tag else_keyword>> {name="${else}"}
 
 private else_keyword ::= ELSE_KEYWORD_TOKEN {name="else_tag"}
 
-elseif_tag ::= <<tag elseif>> {name="${elseif ...}"}
-
-elseif ::= elseif_keyword condition
-
-private elseif_keyword ::= ELSEIF_KEYWORD_TOKEN {name="elseif_tag"}
-
 foreach_block ::= foreach_tag content_or_template* end_tag
 
 foreach_tag ::= <<tag foreach >> {name="${foreach ...}"}
@@ -71,7 +65,7 @@ foreach ::= foreach_keyword foreach_parameters { pin=1 recoverWhile=not_end_toke
 
 foreach_parameters ::= expression (identifier foreach_separator)?
 
-private foreach_separator ::= string?
+private foreach_separator ::= content
 
 private foreach_keyword ::= FOREACH_KEYWORD_TOKEN {name="foreach_tag"}
 
@@ -89,7 +83,7 @@ private annotation_receiver ::= identifier
 private annotation_arguments ::= USER_DEFINED_TOKEN
 
 string_tag ::= <<tag string_expression >> {
-    methods=[prefix="/[0]/affixed/string[0]" suffix="/[0]/affixed/string[1]"]
+    methods=[prefix="/[0]/affixed/content[0]" suffix="/[0]/affixed/content[1]"]
     name="${...}"
 }
 
@@ -110,7 +104,7 @@ string ::= STRING_TOKEN? {
 
 format ::= semi_colon identifier format_params? {name=";format(parameters)"}
 
-defaultValue ::= left_paren string right_paren {name="(default value)"}
+defaultValue ::= left_paren content right_paren {name="(default value)"}
 
 format_params ::= left_paren USER_DEFINED_TOKEN right_paren {name="(format parameters)"}
 

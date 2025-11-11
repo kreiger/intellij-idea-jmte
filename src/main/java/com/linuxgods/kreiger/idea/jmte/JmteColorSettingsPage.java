@@ -34,33 +34,38 @@ public class JmteColorSettingsPage implements ColorSettingsPage {
     @Override public @NonNls @NotNull String getDemoText() {
         return """
                 ${@annotation parameters}
-                ${--comment}
-                <html>
-                <head>
-                    ${<title>,example.title,</title>}
-                </head>
-                <body>
-                    ${<h1>,example.heading,</h1>}
+                ${-- comment}
+                ${
                 
-                    ${expression}
+                }
                 
-                    ${expression(defaultValue)}
+                ${example.expression}
                 
-                    ${expression;format(parameters)}
+                ${example.expression(defaultValue)}
                 
-                    ${foreach items item , }
-                        ${item}
-                    ${end}
+                ${example.expression;format(parameters)}
+
+                ${prefix,example.expression,suffix}
                 
-                    ${if condition = ' test ' }
+                ${prefix,example.expression(default value),suffix;format(parameters)}
                 
-                    ${elseif other.condition }
+                ${example.expression.items[0]}
+
+                ${foreach example.expression.items item  separator }
+                    ${item}
+                    ${index_item} ${first_item} ${last_item} ${odd_item} ${even_item}
+                ${end}
                 
-                    ${else}
+                ${foreach example.expression.items}
+                    ${_it}
+                    ${index__it} ${first__it} ${last__it} ${odd__it} ${even__it}
+                ${end}
                 
-                    ${end}
-                </body>
-                </html>
+                ${if example.expression} ${else} ${end}
+                ${if example.expression = 'string'} ${else} ${end}
+                ${if example.expression = "string"} ${else} ${end}
+                ${if example.expression = other.expression} ${else} ${end}
+                
                 """;
     }
 
