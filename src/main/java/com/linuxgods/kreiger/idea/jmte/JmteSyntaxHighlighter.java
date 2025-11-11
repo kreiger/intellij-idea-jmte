@@ -19,7 +19,6 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
     static final TextAttributesKey[] BAD_CHAR_KEYS = keys("JMTE_BAD_CHARACTER", BAD_CHARACTER);
     static final TextAttributesKey[] MARKUP_KEYS = keys("JMTE_MARKUP", KEYWORD);
     static final TextAttributesKey[] OPERATION_KEYS = keys("JMTE_OPERATION", OPERATION_SIGN);
-    static final TextAttributesKey[] COMMA_KEYS = keys("JMTE_COMMA", COMMA);
     static final TextAttributesKey[] SEMICOLON_KEYS = keys("JMTE_SEMICOLON", SEMICOLON);
     static final TextAttributesKey[] PAREN_KEYS = keys("JMTE_PARENTHESES", PARENTHESES);
     static final TextAttributesKey[] DOT_KEYS = keys("JMTE_DOT", DOT);
@@ -52,9 +51,6 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
         }
         if (tokenType.equals(JmteTypes.DOT_TOKEN)) {
             return DOT_KEYS;
-        }
-        if (tokenType.equals(JmteTypes.COMMA_TOKEN)) {
-            return COMMA_KEYS;
         }
         if (tokenType.equals(JmteTypes.SEMI_COLON_TOKEN)) {
             return SEMICOLON_KEYS;

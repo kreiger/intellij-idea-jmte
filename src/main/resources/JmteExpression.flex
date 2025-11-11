@@ -176,7 +176,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <PREFIX> {
     ","                                       { yybegin(INFIX); return JmteTypes.COMMA_TOKEN; }
-    (\\[\\,]|[^,])+                           { return JmteTypes.STRING_TOKEN; }
+    (\\[\\,]|[^,])+                           { return JmteTypes.TEMPLATE_DATA_TOKEN; }
 }
 
 <INFIX> {
@@ -189,7 +189,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <SUFFIX> {
     ";"                                       { yybegin(FORMAT); return JmteTypes.SEMI_COLON_TOKEN; }
-    (\\[\\;]|[^;])+                           { return JmteTypes.STRING_TOKEN; }
+    (\\[\\;]|[^;])+                           { return JmteTypes.TEMPLATE_DATA_TOKEN; }
 }
 
 <FORMAT> {

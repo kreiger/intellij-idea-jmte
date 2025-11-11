@@ -97,7 +97,7 @@ private string_expression ::= (affixed | unaffixed) format? { pin=1 recoverWhile
 
 private semi_colon ::= SEMI_COLON_TOKEN {name=";"}
 
-affixed ::= string comma unaffixed comma string
+affixed ::= content comma unaffixed comma content
 
 private comma ::= COMMA_TOKEN {name=","}
 

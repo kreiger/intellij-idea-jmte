@@ -1,10 +1,7 @@
 package com.linuxgods.kreiger.idea.jmte;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.json.JsonLanguage;
 import com.intellij.lang.Language;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -13,7 +10,6 @@ import com.intellij.openapi.file.exclude.OverrideFileTypeManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -22,21 +18,21 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -44,7 +40,6 @@ import java.util.stream.Stream;
 
 public class JmteEditorNotificationProvider implements EditorNotificationProvider {
     private static final Key<Boolean> DISABLE_NOTIFICATION = Key.create("jmte.file.type.notification.disable");
-    public static final Logger LOGGER = LoggerFactory.getLogger(JmteEditorNotificationProvider.class);
 
     @Override
     public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project, @NotNull VirtualFile file) {
@@ -67,43 +62,29 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
                 return null;
             }
 
-            var panel = new EditorNotificationPanel();
+            var panel = new EditorNotificationPanel() {
+                JComponent getLinksPanel() {
+                    return this.myLinksPanel;
+                }
+            };
             panel.setText("This file looks like a JMTE template containing " + fileType.getDisplayName());
 
 
             panel.createActionLabel("Override type...", () -> {
-                Runnable overrideType = new Runnable() {
-                    @Override public void run() {
-                        OverrideFileTypeManager.getInstance().addFile(file, JmteFileType.INSTANCE);
-                        TemplateDataLanguageMappings.getInstance(project).setMapping(file, fileType.getLanguage());
-                    }
-
-                    @Override public String toString() {
-                        return "Override type for this file";
-                    }
-                };
-                Runnable overrideTypeForall = new Runnable() {
-                    @Override public void run() {
-                        for (VirtualFile child : file.getParent().getChildren()) {
-                            if (child.getFileType() == fileType) {
-                                OverrideFileTypeManager.getInstance().addFile(child, JmteFileType.INSTANCE);
-                                TemplateDataLanguageMappings.getInstance(project).setMapping(child, fileType.getLanguage());
-                            }
-                        }
-                    }
-
-                    @Override public String toString() {
-                        return "Override type for all " + fileType.getDisplayName() + " files in " + file.getParent().getName();
-                    }
-                };
                 List<Runnable> runnables = new ArrayList<>();
-                runnables.add(overrideType);
+                runnables.add(namedRunnable("Override type for this file", () -> overrideFileType(project, file)));
                 List<VirtualFile> otherChildren = findSiblingFilesOfType(parent, file, fileType);
                 if (!otherChildren.isEmpty()) {
-                    runnables.add(overrideTypeForall);
+                    runnables.add(namedRunnable("Override type for all " + fileType.getDisplayName() + " files in " + file.getParent().getName(), () -> {
+                        for (VirtualFile child : file.getParent().getChildren()) {
+                            if (child.getFileType() == fileType) {
+                                overrideFileType(project, child);
+                            }
+                        }
+                    }));
                 }
 
-                ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>("Override type", runnables) {
+                ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>("Override Type", runnables) {
                     @Override public @Nullable PopupStep<?> onChosen(Runnable selectedValue, boolean finalChoice) {
                         selectedValue.run();
                         return FINAL_CHOICE;
@@ -120,31 +101,18 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
                         String ext = "." + extMatcher.getExtension();
                         if (!file.getName().endsWith(ext)) {
                             String newName = file.getName() + ext;
-                            runnables.add(new Runnable() {
-                                @Override public void run() {
-                                    try {
-                                        WriteAction.run(() -> {
-                                            file.rename(JmteEditorNotificationProvider.this, newName);
-                                        });
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                }
-
-                                @Override public String toString() {
-                                    return "Rename file to " + newName;
-                                }
-                            });
+                            runnables.add(namedRunnable("Rename file to " + newName, () -> WriteAction.run(() -> file.rename(JmteEditorNotificationProvider.this, newName))));
                         }
                     }
                 });
                 ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(null, runnables) {
-                    @Override public @Nullable PopupStep<?> onChosen(Runnable selectedValue, boolean finalChoice) {
+                    @Override
+                    public @Nullable PopupStep<?> onChosen(Runnable selectedValue, boolean finalChoice) {
                         selectedValue.run();
                         return FINAL_CHOICE;
                     }
                 });
-                listPopup.showUnderneathOf(panel);
+                listPopup.showUnderneathOf(panel.getLinksPanel());
 
             });
 
@@ -165,6 +133,32 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
                 EditorNotifications.getInstance(project).updateAllNotifications();
             });
             return panel;
+        };
+    }
+
+    private void overrideFileType(@NotNull Project project, @NotNull VirtualFile file) {
+        LanguageFileType fileType = (LanguageFileType) file.getFileType();
+        Language language = fileType.getLanguage();
+        OverrideFileTypeManager.getInstance().addFile(file, JmteFileType.INSTANCE);
+        TemplateDataLanguageMappings.getInstance(project).setMapping(file, language);
+    }
+
+    private static @NotNull Runnable namedRunnable(@Nls @NotNull final String name, final ThrowableRunnable<?> runnable) {
+        return new Runnable() {
+            @Override public void run() {
+                try {
+                    runnable.run();
+                } catch (Throwable e) {
+                    if (e instanceof IOException ioe) {
+                        throw new UncheckedIOException(ioe);
+                    }
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override public String toString() {
+                return name;
+            }
         };
     }
 
@@ -196,11 +190,4 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
         return false;
     }
 
-    private static boolean potentialTemplate(Language language) {
-        if (language == XMLLanguage.INSTANCE) return true;
-        if (language == HTMLLanguage.INSTANCE) return true;
-        if (language instanceof JsonLanguage) return true;
-        if (language instanceof PlainTextLanguage) return true;
-        return false;
-    }
 }

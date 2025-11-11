@@ -34,29 +34,33 @@ public class JmteColorSettingsPage implements ColorSettingsPage {
     @Override public @NonNls @NotNull String getDemoText() {
         return """
                 ${@annotation parameters}
-                
                 ${--comment}
+                <html>
+                <head>
+                    ${<title>,example.title,</title>}
+                </head>
+                <body>
+                    ${<h1>,example.heading,</h1>}
                 
-                ${expression}
+                    ${expression}
                 
-                ${nested.expression}
+                    ${expression(defaultValue)}
                 
-                ${expression(defaultValue)}
+                    ${expression;format(parameters)}
                 
-                ${expression;format(parameters)}
+                    ${foreach items item , }
+                        ${item}
+                    ${end}
                 
-                ${foreach items item , }
-                    ${item}
-                ${end}
+                    ${if condition = ' test ' }
                 
-                ${if condition = ' test ' }
+                    ${elseif other.condition }
                 
-                ${elseif other.condition }
+                    ${else}
                 
-                ${else}
-                
-                ${end}
-                
+                    ${end}
+                </body>
+                </html>
                 """;
     }
 
