@@ -2,31 +2,19 @@ package com.linuxgods.kreiger.idea.jmte.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Query;
+import com.intellij.psi.search.*;
+import groovyjarjarantlr4.v4.misc.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.lang.reflect.Modifier;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
-import static com.intellij.psi.search.GlobalSearchScope.allScope;
-import static com.intellij.psi.search.GlobalSearchScopes.*;
+import static com.intellij.psi.PsiModifier.PUBLIC;
 
 public class JmteIdentifierBase extends ASTWrapperPsiElement implements JmteIdentifier {
     public JmteIdentifierBase(@NotNull ASTNode node) {
@@ -34,45 +22,34 @@ public class JmteIdentifierBase extends ASTWrapperPsiElement implements JmteIden
     }
 
     @Override public PsiReference getReference() {
-        return new PsiReferenceBase<>(this, TextRange.from(0, getTextLength()), true) {
+        if (getParent() instanceof JmteExpression e && e.getExpression() == null) {
+            return null;
+        }
+
+        return new PsiPolyVariantReferenceBase<>(this, TextRange.from(0, getTextLength()), true) {
 
             @Override public @NotNull TextRange getAbsoluteRange() {
                 return super.getAbsoluteRange();
             }
 
-            @Override public @Nullable PsiElement resolve() {
+            @Override public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
                 Project project = getProject();
-                JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-                // find getters in project by name
+                PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(project);
+                String name = getText();
+                String suffix = Utils.capitalize(name);
+                GlobalSearchScope scope = GlobalSearchScopes.projectProductionScope(project);
+                PsiMethod[] getters = shortNamesCache.getMethodsByName("get" + suffix, scope);
+                PsiMethod[] isGetters = shortNamesCache.getMethodsByName("is" + suffix, scope);
 
-                PsiClass engineClass = CachedValuesManager.getManager(project).createCachedValue(() -> {
-                    PsiClass aClass = javaPsiFacade.findClass("com.floreysoft.jmte.Engine", allScope(project));
-                    return new CachedValueProvider.Result<>(aClass, aClass);
-                }).getValue();
-                if (engineClass == null) throw new RuntimeException("Could not find com.floreysoft.jmte.Engine");
+                Stream<PsiField> fields = Stream.of(shortNamesCache.getFieldsByName(name, scope))
+                        .filter(f -> f.hasModifierProperty(PUBLIC));
+                Stream<PsiMethod> methods = Stream.concat(Stream.of(getters), Stream.of(isGetters))
+                        .filter(m -> m.getModifierList().hasModifierProperty(PUBLIC))
+                        .filter(m -> m.getParameterList().isEmpty());
 
-                ProgressManager progressManager = ProgressManager.getInstance();
-
-                return progressManager.runProcess(() ->
-                        Arrays.stream(engineClass.findMethodsByName("transform", false))
-                                .flatMap(transformMethod -> {
-                                    Query<PsiReference> query = MethodReferencesSearch.search(transformMethod, projectProductionScope(project), true);
-                                    return StreamSupport.stream(query.spliterator(), false);
-                                })
-                                .map(PsiReference::getElement)
-                                .map(element -> PsiTreeUtil.findFirstParent(element, p -> p instanceof PsiMethodCallExpression))
-                                .filter(Objects::nonNull)
-                                .map(PsiMethodCallExpression.class::cast)
-                                .flatMap(mce -> {
-                                    return Stream.of(mce.getArgumentList().getExpressions())
-                                            .filter(e -> e instanceof PsiReferenceExpression)
-                                            .filter(e -> isMapOfStringToObject(e.getType()))
-                                            .map(e -> ((PsiReferenceExpression) e).resolve())
-                                            ;
-                                })
-                                .findFirst()
-                                .orElse(null),
-                        new EmptyProgressIndicator());
+                return Stream.concat(fields, methods)
+                        .map(PsiElementResolveResult::new)
+                        .toArray(ResolveResult[]::new);
             }
 
             @Override public Object @NotNull [] getVariants() {

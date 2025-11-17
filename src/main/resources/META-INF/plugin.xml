@@ -41,9 +41,6 @@
         <completion.contributor language="JMTE" implementationClass="com.linuxgods.kreiger.idea.jmte.JmteCompletionContributor"/>
         <lang.elementManipulator forClass="com.linuxgods.kreiger.idea.jmte.psi.JmteStringBase"
                                  implementationClass="com.linuxgods.kreiger.idea.jmte.JmteStringElementManipulator" />
-        <localInspection language="JMTE" groupName="JMTE" shortName="JmteReferencesInspection" displayName="JMTE references"
-                         level="ERROR" enabledByDefault="true"
-                         implementationClass="com.linuxgods.kreiger.idea.jmte.JmteReferencesInspection"/>
         <fileBasedIndex implementation="com.linuxgods.kreiger.idea.jmte.JmteFileIndex"  />
         <colorSettingsPage implementation="com.linuxgods.kreiger.idea.jmte.JmteColorSettingsPage" />
     </extensions>

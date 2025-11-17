@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.BooleanDataDescriptor;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static java.lang.Boolean.TRUE;
+import static java.util.Collections.emptyList;
 
 public class JmteFileIndex extends ScalarIndexExtension<Boolean> {
     private static final ID<Boolean, Void> NAME = ID.create("JmteFileIndex");
@@ -28,39 +30,36 @@ public class JmteFileIndex extends ScalarIndexExtension<Boolean> {
     public static @NotNull Collection<JmteFile> getImplicitlyIncludedFiles(PsiFile targetFile) {
         Module module = ModuleUtilCore.findModuleForPsiElement(targetFile);
         if (module == null || DumbService.getInstance(module.getProject()).isDumb()) {
-            return Collections.emptyList();
+            return emptyList();
         }
         Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, TRUE, GlobalSearchScope.moduleScope(module));
-        List<JmteFile> result = new ArrayList<>(files.size());
-
-        for (VirtualFile virtualFile : files) {
-            PsiFile psiFile = targetFile.getManager().findFile(virtualFile);
-            if (psiFile instanceof JmteFile jmteFile) {
-                if (psiFile.equals(targetFile)) {
-                    return Collections.emptyList();
-                }
-                result.add(jmteFile);
-            }
+        if (files.contains(targetFile.getVirtualFile())) {
+            return emptyList();
         }
-        return result;
+
+        PsiManager psiManager = targetFile.getManager();
+        return files.stream()
+                .map(psiManager::findFile)
+                .filter(JmteFile.class::isInstance)
+                .map(JmteFile.class::cast)
+                .toList();
     }
 
     public @NotNull DataIndexer<Boolean, Void, FileContent> getIndexer() {
-        return new DataIndexer<>() {
-            public @NotNull Map<Boolean, Void> map(@NotNull FileContent inputData) {
-
-                CharSequence text = inputData.getContentAsText();
-                int markerLength = IMPLICIT_INCLUDE_MARKER.length();
-                if (text.length() < markerLength || !IMPLICIT_INCLUDE_MARKER.equals(text.subSequence(0, markerLength).toString())) {
-                    return Collections.emptyMap();
-                }
-                HashMap<Boolean, Void> map = new HashMap<>();
-                map.put(Boolean.TRUE, null);
-                return map;
+        return inputData -> {
+            if (startsWith(inputData.getContentAsText(), IMPLICIT_INCLUDE_MARKER)) {
+                return Collections.emptyMap();
             }
+            HashMap<Boolean, Void> map = new HashMap<>();
+            map.put(Boolean.TRUE, null);
+            return map;
         };
     }
 
+    private static boolean startsWith(CharSequence text, @NonNls String prefix) {
+        int markerLength = prefix.length();
+        return text.length() < markerLength || !prefix.equals(text.subSequence(0, markerLength).toString());
+    }
 
     public @NotNull KeyDescriptor<Boolean> getKeyDescriptor() {
         return BooleanDataDescriptor.INSTANCE;

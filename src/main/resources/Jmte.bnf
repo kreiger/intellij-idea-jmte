@@ -111,15 +111,11 @@ format_params ::= left_paren USER_DEFINED_TOKEN right_paren {name="(format param
 private left_paren ::= LEFT_PAREN_TOKEN {name="("}
 private right_paren ::= RIGHT_PAREN_TOKEN {name=")"}
 
-expression ::= qualifier_expression
+fake reference_expression ::= expression? DOT_TOKEN identifier
 
-qualifier_expression ::= qualified_expression | simple_reference_expression {extends=expression}
-
-fake reference_expression ::= qualifier_expression? DOT_TOKEN identifier {extends=qualifier_expression}
-
-qualified_expression ::= qualifier_expression DOT_TOKEN identifier {extends=reference_expression elementType=reference_expression}
-
-simple_reference_expression ::= identifier {elementType=reference_expression}
+expression ::= qualified_expression | identifier_expression { extends=reference_expression }
+qualified_expression ::= expression DOT_TOKEN identifier { extends=expression elementType=expression }
+identifier_expression ::= identifier { extends=expression elementType=expression }
 
 identifier ::= IDENTIFIER_TOKEN {
     extends="com.linuxgods.kreiger.idea.jmte.psi.JmteIdentifierBase"
