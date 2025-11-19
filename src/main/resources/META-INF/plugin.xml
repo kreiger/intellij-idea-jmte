@@ -30,7 +30,7 @@
         <lang.formatter language="JMTE"
                         implementationClass="com.linuxgods.kreiger.idea.jmte.JmteFormattingModelBuilder"/>
 
-        <fileEditorProvider implementation="com.linuxgods.kreiger.idea.jmte.JmteFileEditorProvider"/>
+        <!-- fileEditorProvider implementation="com.linuxgods.kreiger.idea.jmte.JmteFileEditorProvider"/ -->
         <daemon.highlightInfoFilter implementation="com.linuxgods.kreiger.idea.jmte.JmteErrorFilter"/>
         <highlightErrorFilter implementation="com.linuxgods.kreiger.idea.jmte.JmteErrorFilter" />
         <editorNotificationProvider implementation="com.linuxgods.kreiger.idea.jmte.JmteEditorNotificationProvider"/>

@@ -14,18 +14,9 @@ import java.util.List;
 %%
 
 %{
-    private final static Logger LOGGER = LoggerFactory.getLogger("com.linuxgods.kreiger.idea.jmte._JmteLexer");
+    public static final IElementType STRING_REFERENCE_TOKEN = new IElementType("STRING_REFERENCE_TOKEN", JmteLanguage.INSTANCE);
 
-    private final Deque<Integer> states = new ArrayDeque();
-
-    private void yypushstate(int state) {
-        states.addFirst(yystate());
-        yybegin(state);
-    }
-    private void yypopstate() {
-        final int state = states.removeFirst();
-        yybegin(state);
-    }
+    private final static Logger LOGGER = LoggerFactory.getLogger("com.linuxgods.kreiger.idea.jmte._JmteExpressionLexer");
 %}
 
 %class _JmteExpressionLexer
@@ -80,10 +71,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
     "if"                                     { yybegin(IF); return JmteTypes.IF_KEYWORD_TOKEN; }
     "else"                                   { yybegin(EXPRESSION_END); return JmteTypes.ELSE_KEYWORD_TOKEN; }
     "end"                                    { yybegin(EXPRESSION_END); return JmteTypes.END_KEYWORD_TOKEN; }
-    {WHITE_SPACE}                            { return TokenType.WHITE_SPACE; }
-    \w+"."                                   { yybegin(STRING_EXPRESSION); yypushback(yylength()); }
-    \w+                                      { yybegin(STRING_EXPRESSION); yypushback(yylength()); }
-    \S                                       { yybegin(STRING_EXPRESSION); yypushback(1); }
+    [^]                                      { yybegin(STRING_EXPRESSION); yypushback(1); }
 }
 
 <ANNOTATION> {
@@ -118,7 +106,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
     {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
     "="                                       { yybegin(IF_CONDITION_VALUE); return JmteTypes.EQUALS_TOKEN; }
     "."                                       { return JmteTypes.DOT_TOKEN; }
-    (\\[\\=.\s]|[^=.\s])+                     { return JmteTypes.IDENTIFIER_TOKEN; }
+    (\\[^]|[^=.\s])+                          { return JmteTypes.IDENTIFIER_TOKEN; }
 }
 
 <IF_CONDITION_VALUE> {
@@ -146,12 +134,12 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <FOREACH_REFERENCE> {
     "."                                       { return JmteTypes.DOT_TOKEN; }
-    (\\[\\.\s]|[^.\s])+                       { return JmteTypes.IDENTIFIER_TOKEN; }
+    (\\[^]|[^.\s])+                           { return JmteTypes.IDENTIFIER_TOKEN; }
     {WHITE_SPACE}                             { yybegin(FOREACH_ITEM); return TokenType.WHITE_SPACE; }
 }
 
 <FOREACH_ITEM> {
-    (\\\s|[^\s])+                             { return JmteTypes.IDENTIFIER_TOKEN; }
+    (\\[^]|[^\s])+                             { return JmteTypes.IDENTIFIER_TOKEN; }
     \s                                        { yybegin(FOREACH_SEPARATOR); return TokenType.WHITE_SPACE; }   
 }
 
@@ -163,8 +151,10 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 <STRING_EXPRESSION> {
     [^]+   {
                 String text = yytext().toString();
+                if (text.isBlank()) return TokenType.WHITE_SPACE;
                 List<String> semicolon = Util.RAW_OUTPUT_MINI_PARSER.split(text, ';', 2);
-                List<String> comma = Util.RAW_OUTPUT_MINI_PARSER.split(semicolon.get(0), ',', 3);
+                String first = semicolon.get(0);
+                List<String> comma = Util.RAW_OUTPUT_MINI_PARSER.split(first, ',', 3);
                 if (comma.size() == 3) {
                     yybegin(PREFIX); yypushback(yylength());
                 } else {
@@ -175,43 +165,32 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 <PREFIX> {
     ","                                       { yybegin(INFIX); return JmteTypes.COMMA_TOKEN; }
-    (\\[\\,]|[^,])+                           { return JmteTypes.TEMPLATE_DATA_TOKEN; }
+    (\\[^]|[^,])+                             { return JmteTypes.TEMPLATE_DATA_TOKEN; }
 }
 
 <INFIX> {
-    {WHITE_SPACE}                             { return TokenType.BAD_CHARACTER; }
-    "."                                       { return JmteTypes.DOT_TOKEN; }
     ","                                       { yybegin(SUFFIX); return JmteTypes.COMMA_TOKEN; }
-    "("                                       { yypushstate(DEFAULT_VALUE); return JmteTypes.LEFT_PAREN_TOKEN; }
-    (\\[\\.,(\s]|[^.,(\s])+                   { return JmteTypes.IDENTIFIER_TOKEN; }
+    (\\[^]|[^,])+                             { return STRING_REFERENCE_TOKEN; }
 }
 
 <SUFFIX> {
     ";"                                       { yybegin(FORMAT); return JmteTypes.SEMI_COLON_TOKEN; }
-    (\\[\\;]|[^;])+                           { return JmteTypes.TEMPLATE_DATA_TOKEN; }
+    (\\[^]|[^;])+                             { return JmteTypes.TEMPLATE_DATA_TOKEN; }
 }
 
 <FORMAT> {
     [^(]+                                     { return JmteTypes.IDENTIFIER_TOKEN; }
-    "("                                       { yypushstate(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
-}
-
-<DEFAULT_VALUE> {
-    ")"                                       { yypopstate(); return JmteTypes.RIGHT_PAREN_TOKEN; }
-    (\\[\\)]|[^)])+                           { return JmteTypes.TEMPLATE_DATA_TOKEN; }
+    "("                                       { yybegin(PARAM); return JmteTypes.LEFT_PAREN_TOKEN; }
 }
 
 <PARAM> {
-    ")"                                       { yypopstate(); return JmteTypes.RIGHT_PAREN_TOKEN; }
-    (\\[\\)]|[^)])+                           { return JmteTypes.USER_DEFINED_TOKEN; }
+    ")"                                       { yybegin(EXPRESSION_END); return JmteTypes.RIGHT_PAREN_TOKEN; }
+    (\\[^]|[^)])+                             { return JmteTypes.USER_DEFINED_TOKEN; }
 }
 
 <UNAFFIXED> {
-    {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
-    "("                                       { yypushstate(DEFAULT_VALUE); return JmteTypes.LEFT_PAREN_TOKEN; }
-    "."                                       { return JmteTypes.DOT_TOKEN; }
-    ";"                                       { yypushstate(FORMAT); return JmteTypes.SEMI_COLON_TOKEN; }
-    (\\[\\(.;\s]|[^\\(.;\s])+                 { return JmteTypes.IDENTIFIER_TOKEN; }
+    ";"                                       { yybegin(FORMAT); return JmteTypes.SEMI_COLON_TOKEN; }
+    (\\[^]|[^;])+                             { return STRING_REFERENCE_TOKEN; }
 }
 
 [^]                                           {

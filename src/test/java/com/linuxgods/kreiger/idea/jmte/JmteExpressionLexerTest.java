@@ -52,10 +52,8 @@ public class JmteExpressionLexerTest extends LexerTestBase {
 
     @Test
     void testWhitespaceNonComment() {
-        start(" -- ");
-        next(WHITE_SPACE, " ");
-        next(IDENTIFIER_TOKEN, "--");
-        next(WHITE_SPACE, " ");
+        start(" \n ");
+        next(WHITE_SPACE, " \n ");
         end();
     }
 
@@ -68,7 +66,7 @@ public class JmteExpressionLexerTest extends LexerTestBase {
         next(WHITE_SPACE, " ");
         next(IDENTIFIER_TOKEN, "items");
         next(WHITE_SPACE, " ");
-        next(STRING_TOKEN, " , ");
+        next(TEMPLATE_DATA_TOKEN, " , ");
         next(END_KEYWORD_TOKEN, "end");
         end();
     }
@@ -79,7 +77,7 @@ public class JmteExpressionLexerTest extends LexerTestBase {
         next(ANNOTATION_KEYWORD_TOKEN, "@");
         next(IDENTIFIER_TOKEN, "receiver");
         next(WHITE_SPACE, " ");
-        next(STRING_TOKEN, "arg0\narg1");
+        next(USER_DEFINED_TOKEN, "arg0\narg1");
         end();
     }
 

@@ -1,7 +1,9 @@
+import org.jetbrains.grammarkit.tasks.GenerateLexerTask
+
 plugins {
     id("java")
     id("org.jetbrains.intellij.platform") version "2.10.4"
-    id("org.jetbrains.grammarkit") version "2022.3.2.2"
+    id("org.jetbrains.grammarkit") version "2023.3.0.1"
 }
 
 group = "com.linuxgods.kreiger.idea.jmte"
@@ -17,14 +19,20 @@ repositories {
 dependencies {
     implementation("com.floreysoft:jmte:7.0.3")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation(platform("org.junit:junit-bom:6.0.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
     intellijPlatform {
         intellijIdeaCommunity("2025.2.4")
 
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.intellij.intelliLang")
         bundledPlugin("com.intellij.modules.json")
+        //bundledPlugin("com.intellij.freemarker")
+        //bundledPlugin("com.intellij.velocity")
         plugin( "PsiViewer:252.23892.248")
     }
 }
@@ -49,10 +57,16 @@ intellijPlatform {
 
 tasks.generateLexer {
     sourceFile = file("src/main/resources/JmteExpression.flex")
-    //targetClass = "com.linuxgods.kreiger.idea.jmte._JmteExpressionLexer"
     targetOutputDir = file("build/generated/lexer/com/linuxgods/kreiger/idea/jmte")
     dependsOn("cleanGenerateLexer")
 }
+
+val generateReferenceLexer = tasks.register<GenerateLexerTask>("generateReferenceLexer") {
+    sourceFile = file("src/main/resources/JmteReference.flex")
+    targetOutputDir = file("build/generated/reference-lexer/com/linuxgods/kreiger/idea/jmte")
+    dependsOn("cleanGenerateReferenceLexer")
+}
+
 tasks.generateParser {
     sourceFile = file("src/main/resources/Jmte.bnf")
     pathToParser = "_JmteParser"
@@ -60,10 +74,12 @@ tasks.generateParser {
     targetRootOutputDir = file("build/generated/parser")
     dependsOn("cleanGenerateParser")
 }
+
 sourceSets {
     named("main") {
         java {
             srcDir("build/generated/lexer")
+            srcDir("build/generated/reference-lexer")
             srcDir("build/generated/parser")
         }
     }
@@ -71,6 +87,7 @@ sourceSets {
 
 tasks.withType<JavaCompile> {
     options.release = 17
+    dependsOn(generateReferenceLexer)
     dependsOn(tasks.generateLexer)
     dependsOn(tasks.generateParser)
 }

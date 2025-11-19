@@ -63,7 +63,7 @@ foreach_tag ::= <<tag foreach >> {name="${foreach ...}"}
 
 foreach ::= foreach_keyword foreach_parameters { pin=1 recoverWhile=not_end_token }
 
-foreach_parameters ::= expression (identifier foreach_separator)?
+foreach_parameters ::= expression (identifier foreach_separator?)?
 
 private foreach_separator ::= content
 
@@ -87,7 +87,7 @@ string_tag ::= <<tag string_expression >> {
     name="${...}"
 }
 
-private string_expression ::= (affixed | unaffixed) format? { pin=1 recoverWhile=not_end_token }
+private string_expression ::= (affixed | unaffixed) (semi_colon format)? { pin=1 recoverWhile=not_end_token }
 
 private semi_colon ::= SEMI_COLON_TOKEN {name=";"}
 
@@ -102,7 +102,7 @@ string ::= STRING_TOKEN? {
     implements="com.intellij.psi.PsiLanguageInjectionHost"
 }
 
-format ::= semi_colon identifier format_params? {name=";format(parameters)"}
+format ::= identifier format_params? {name=";format(parameters)"}
 
 defaultValue ::= left_paren content right_paren {name="(default value)"}
 
