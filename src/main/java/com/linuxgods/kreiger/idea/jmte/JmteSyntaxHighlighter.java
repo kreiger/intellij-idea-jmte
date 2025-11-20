@@ -1,5 +1,6 @@
 package com.linuxgods.kreiger.idea.jmte;
 
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.linuxgods.kreiger.idea.jmte.psi.JmteTokenSets;
 import com.linuxgods.kreiger.idea.jmte.psi.JmteTypes;
 import com.intellij.lexer.Lexer;
@@ -21,6 +22,7 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
     static final TextAttributesKey[] OPERATION_KEYS = keys("JMTE_OPERATION", OPERATION_SIGN);
     static final TextAttributesKey[] DOT_KEYS = keys("JMTE_DOT", DOT);
     static final TextAttributesKey[] KEYWORD_KEYS = keys("JMTE_KEYWORD", KEYWORD);
+    static final TextAttributesKey[] NUMBER_KEYS = keys("JMTE_NUMBER", NUMBER);
     static final TextAttributesKey[] IDENTIFIER_KEYS = keys("JMTE_IDENTIFIER", IDENTIFIER);
     static final TextAttributesKey[] STRING_KEYS = keys("JMTE_STRING", STRING);
     static final TextAttributesKey[] USER_DEFINED_KEYS = keys("JMTE_USER_DEFINED", MARKUP_ENTITY);
@@ -70,6 +72,9 @@ public class JmteSyntaxHighlighter extends SyntaxHighlighterBase {
         }
         if (tokenType.equals(JmteTypes.USER_DEFINED_TOKEN)) {
             return USER_DEFINED_KEYS;
+        }
+        if (tokenType.equals(JmteTypes.INTEGER_LITERAL_TOKEN)) {
+            return NUMBER_KEYS;
         }
 
         return EMPTY_KEYS;

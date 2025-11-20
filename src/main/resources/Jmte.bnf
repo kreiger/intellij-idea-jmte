@@ -111,11 +111,17 @@ format_params ::= left_paren USER_DEFINED_TOKEN right_paren {name="(format param
 private left_paren ::= LEFT_PAREN_TOKEN {name="("}
 private right_paren ::= RIGHT_PAREN_TOKEN {name=")"}
 
-fake reference_expression ::= expression? DOT_TOKEN identifier
+fake reference_expression ::= expression? DOT_TOKEN identifier array_index?
 
 expression ::= qualified_expression | identifier_expression { extends=reference_expression }
-qualified_expression ::= expression DOT_TOKEN identifier { extends=expression elementType=expression }
-identifier_expression ::= identifier { extends=expression elementType=expression }
+qualified_expression ::= expression DOT_TOKEN identifier array_index? { extends=expression elementType=expression }
+identifier_expression ::= identifier array_index? { extends=expression elementType=expression }
+
+array_index ::= LEFT_BRACKET_TOKEN (last_index_keyword | integer_literal (comma integer_literal?)?) RIGHT_BRACKET_TOKEN
+
+last_index_keyword ::= LAST_INDEX_KEYWORD_TOKEN
+
+integer_literal ::= INTEGER_LITERAL_TOKEN
 
 identifier ::= IDENTIFIER_TOKEN {
     extends="com.linuxgods.kreiger.idea.jmte.psi.JmteIdentifierBase"

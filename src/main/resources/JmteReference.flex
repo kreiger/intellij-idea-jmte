@@ -43,19 +43,28 @@ LINE_WS_TOKEN=[\ \t\f]
 WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
 
 %state DEFAULT_VALUE
+%state ARRAY_INDEX
 
 %%
 
 <YYINITIAL> {
     {WHITE_SPACE}                             { return TokenType.BAD_CHARACTER; }
     "."                                       { return JmteTypes.DOT_TOKEN; }
-    "("                                       { yypushstate(DEFAULT_VALUE); return JmteTypes.LEFT_PAREN_TOKEN; }
-    (\\[\\.,(\s]|[^.,(\s])+                   { return JmteTypes.IDENTIFIER_TOKEN; }
+    "["                                       { yybegin(ARRAY_INDEX); return JmteTypes.LEFT_BRACKET_TOKEN; }
+    "("                                       { yybegin(DEFAULT_VALUE); return JmteTypes.LEFT_PAREN_TOKEN; }
+    (\\[^]|[^\[.,(\s])+                       { return JmteTypes.IDENTIFIER_TOKEN; }
+}
+
+<ARRAY_INDEX> {
+    [lL][aA][sS][tT]                          { return JmteTypes.LAST_INDEX_KEYWORD_TOKEN; }
+    \d+                                       { return JmteTypes.INTEGER_LITERAL_TOKEN; }
+    ","                                       { return JmteTypes.COMMA_TOKEN; }
+    "]"                                       { yybegin(YYINITIAL); return JmteTypes.RIGHT_BRACKET_TOKEN; }
 }
 
 <DEFAULT_VALUE> {
-    ")"                                       { yypopstate(); return JmteTypes.RIGHT_PAREN_TOKEN; }
-    (\\[\\)]|[^)])+                           { return JmteTypes.TEMPLATE_DATA_TOKEN; }
+    ")"                                       { yybegin(YYINITIAL); return JmteTypes.RIGHT_PAREN_TOKEN; }
+    (\\[^]|[^)])+                             { return JmteTypes.TEMPLATE_DATA_TOKEN; }
 }
 
 [^]                                           {
