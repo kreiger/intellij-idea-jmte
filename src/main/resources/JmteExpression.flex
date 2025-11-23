@@ -71,6 +71,7 @@ WHITE_SPACE=({LINE_WS_TOKEN}|{EOL_TOKEN})+
     "if"                                     { yybegin(IF); return JmteTypes.IF_KEYWORD_TOKEN; }
     "else"                                   { yybegin(EXPRESSION_END); return JmteTypes.ELSE_KEYWORD_TOKEN; }
     "end"                                    { yybegin(EXPRESSION_END); return JmteTypes.END_KEYWORD_TOKEN; }
+    \w+                                      { yybegin(STRING_EXPRESSION); yypushback(yylength()); }
     [^]                                      { yybegin(STRING_EXPRESSION); yypushback(1); }
 }
 
