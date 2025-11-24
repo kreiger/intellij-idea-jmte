@@ -1,7 +1,6 @@
 package com.linuxgods.kreiger.idea.jmte;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -18,7 +17,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
@@ -35,7 +33,9 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class JmteEditorNotificationProvider implements EditorNotificationProvider {
@@ -67,35 +67,33 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
                     return this.myLinksPanel;
                 }
             };
-            panel.setText("This file looks like a JMTE template containing " + fileType.getDisplayName());
+            panel.setText("This file looks like a JMTE template, containing " + fileType.getDisplayName());
 
-
-            panel.createActionLabel("Override type...", () -> {
-                List<Runnable> runnables = new ArrayList<>();
+            panel.createActionLabel("Override type...", () -> createListPopup("Override Type", panel.getLinksPanel(), runnables -> {
                 runnables.add(namedRunnable("Override type for this file", () -> overrideFileType(project, file)));
-                List<VirtualFile> otherChildren = findSiblingFilesOfType(parent, file, fileType);
-                if (!otherChildren.isEmpty()) {
-                    runnables.add(namedRunnable("Override type for all " + fileType.getDisplayName() + " files in " + file.getParent().getName(), () -> {
-                        for (VirtualFile child : file.getParent().getChildren()) {
-                            if (child.getFileType() == fileType) {
-                                overrideFileType(project, child);
-                            }
-                        }
-                    }));
+                Predicate<VirtualFile> predicate;
+                if (fileType instanceof PlainTextFileType) {
+                    predicate = child -> child.getExtension().equals(file.getExtension());
+                } else {
+                    predicate = child -> child.getFileType() == fileType;
                 }
-
-                ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>("Override Type", runnables) {
-                    @Override public @Nullable PopupStep<?> onChosen(Runnable selectedValue, boolean finalChoice) {
-                        selectedValue.run();
-                        return FINAL_CHOICE;
+                List<VirtualFile> otherChildren = findSiblingFilesOfType(file, predicate);
+                if (otherChildren.isEmpty()) {
+                    return;
+                }
+                String displayName = fileType instanceof PlainTextFileType ? "."+file.getExtension() : fileType.getDisplayName();
+                runnables.add(namedRunnable("Override type for this and "+otherChildren.size()+" other " + displayName + " files in " + file.getParent().getName(), () -> {
+                    overrideFileType(project, file);
+                    for (VirtualFile child : otherChildren) {
+                        if (child.getFileType() == fileType) {
+                            overrideFileType(project, child);
+                        }
                     }
-                });
-                listPopup.showUnderneathOf(panel);
-            });
+                }));
+            }));
 
             FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-            panel.createActionLabel("Rename file...", () -> {
-                List<Runnable>  runnables = new ArrayList<>();
+            panel.createActionLabel("Rename file...", () -> createListPopup("Rename File", panel.getLinksPanel(), runnables -> {
                 fileTypeManager.getAssociations(JmteFileType.INSTANCE).forEach((FileNameMatcher association) -> {
                     if (association instanceof ExtensionFileNameMatcher extMatcher) {
                         String ext = "." + extMatcher.getExtension();
@@ -105,16 +103,7 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
                         }
                     }
                 });
-                ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(null, runnables) {
-                    @Override
-                    public @Nullable PopupStep<?> onChosen(Runnable selectedValue, boolean finalChoice) {
-                        selectedValue.run();
-                        return FINAL_CHOICE;
-                    }
-                });
-                listPopup.showUnderneathOf(panel.getLinksPanel());
-
-            });
+            }));
 
             String ext = file.getExtension();
             if (ext != null) {
@@ -136,11 +125,24 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
         };
     }
 
+    private static void createListPopup(String title, JComponent panel, Consumer<List<Runnable>> consumer) {
+        List<Runnable> runnables = new ArrayList<>();
+        consumer.accept(runnables);
+        ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(title, runnables) {
+            @Override
+            public @Nullable PopupStep<?> onChosen(Runnable selectedValue, boolean finalChoice) {
+                selectedValue.run();
+                return FINAL_CHOICE;
+            }
+        });
+        listPopup.showUnderneathOf(panel);
+    }
+
     private void overrideFileType(@NotNull Project project, @NotNull VirtualFile file) {
-        LanguageFileType fileType = (LanguageFileType) file.getFileType();
-        Language language = fileType.getLanguage();
+        //LanguageFileType fileType = (LanguageFileType) file.getFileType();
+        //Language language = fileType.getLanguage();
         OverrideFileTypeManager.getInstance().addFile(file, JmteFileType.INSTANCE);
-        TemplateDataLanguageMappings.getInstance(project).setMapping(file, language);
+        //TemplateDataLanguageMappings.getInstance(project).setMapping(file, language);
     }
 
     private static @NotNull Runnable namedRunnable(@Nls @NotNull final String name, final ThrowableRunnable<?> runnable) {
@@ -162,10 +164,10 @@ public class JmteEditorNotificationProvider implements EditorNotificationProvide
         };
     }
 
-    private static @NotNull List<VirtualFile> findSiblingFilesOfType(VirtualFile parent, VirtualFile file, LanguageFileType fileType) {
-        List<VirtualFile> otherChildren = Stream.of(parent.getChildren())
+    private static @NotNull List<VirtualFile> findSiblingFilesOfType(VirtualFile file, Predicate<VirtualFile> filter) {
+        List<VirtualFile> otherChildren = Stream.of(file.getParent().getChildren())
                 .filter(child -> !file.equals(child))
-                .filter(child -> child.getFileType() == fileType)
+                .filter(filter)
                 .toList();
         return otherChildren;
     }
