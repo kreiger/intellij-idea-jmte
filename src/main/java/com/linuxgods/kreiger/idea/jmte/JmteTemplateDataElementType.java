@@ -5,16 +5,10 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.TokenList;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.templateLanguages.TemplateDataElementType;
-import com.intellij.psi.templateLanguages.TemplateDataModifications;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.velocity.psi.VtlElementTypes;
-import com.linuxgods.kreiger.idea.jmte.psi.JmteTypes;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.linuxgods.kreiger.idea.jmte.JmteFileElementTypes.OUTER_ELEMENT_TYPE;
-import static com.linuxgods.kreiger.idea.jmte.psi.JmteTypes.*;
+import static com.linuxgods.kreiger.idea.jmte.psi.JmteTypes.TEMPLATE_DATA_TOKEN;
 
 class JmteTemplateDataElementType extends TemplateDataElementType {
 
@@ -28,7 +22,8 @@ class JmteTemplateDataElementType extends TemplateDataElementType {
         StringBuilder result = new StringBuilder();
         for(int i = 0; i < tokens.getTokenCount(); ++i) {
             if (!tokens.hasType(i, TEMPLATE_DATA_TOKEN)) {
-                result.append(StringUtils.repeat(' ', tokens.getTokenText(i).length()));
+                rangeCollector.addOuterRange(tokens.getTokenRange(i));
+                //result.append(StringUtils.repeat(' ', tokens.getTokenText(i).length()));
                 continue;
             }
             CharSequence tokenText = tokens.getTokenText(i);
@@ -36,7 +31,8 @@ class JmteTemplateDataElementType extends TemplateDataElementType {
             for (int j = 0; j < tokenText.length(); j++) {
                 char c = tokenText.charAt(j);
                 if (c == '\\' && !escaped) {
-                    result.append(' ');
+                    rangeCollector.addOuterRange(TextRange.from(tokens.getTokenStart(i)+j, 1));
+                    //result.append(' ');
                     escaped = true;
                 } else {
                     result.append(c);

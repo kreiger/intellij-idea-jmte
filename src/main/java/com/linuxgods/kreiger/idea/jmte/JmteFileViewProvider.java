@@ -92,7 +92,8 @@ public class JmteFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
 
         return language instanceof TemplateLanguage
                 ? PlainTextLanguage.INSTANCE
-                : LanguageSubstitutors.getInstance().substituteLanguage(language, virtualFile, project);
+                : language;
+                //: LanguageSubstitutors.getInstance().substituteLanguage(language, virtualFile, project);
     }
 
 

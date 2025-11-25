@@ -2,16 +2,15 @@ package com.linuxgods.kreiger.idea.jmte.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
+import com.linuxgods.kreiger.idea.jmte.JmteTypesPersistentStateComponent;
 import groovyjarjarantlr4.v4.misc.Utils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Modifier;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static com.intellij.psi.PsiModifier.PUBLIC;
@@ -21,9 +20,26 @@ public class JmteIdentifierBase extends ASTWrapperPsiElement implements JmteIden
         super(node);
     }
 
+    public Optional<PsiClass> getPsiClass() {
+        if (!(getParent() instanceof JmteExpression e) || e.getExpression() != null) {
+            return Optional.empty();
+        }
+
+        Project project = getProject();
+        var jmteTypes = JmteTypesPersistentStateComponent.getInstance(project);
+        JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+        return jmteTypes.getFqn(this.getContainingFile().getVirtualFile(), getText())
+                        .map(fqn -> javaPsiFacade.findClass(fqn, GlobalSearchScopes.projectProductionScope(project)));
+
+    }
+
     @Override public PsiReference getReference() {
         if (getParent() instanceof JmteExpression e && e.getExpression() == null) {
-            return null;
+            return new PsiReferenceBase<>(this, TextRange.from(0, getTextLength())) {
+                @Override public PsiElement resolve() {
+                    return getPsiClass().orElse(null);
+                }
+            };
         }
 
         return new PsiPolyVariantReferenceBase<>(this, TextRange.from(0, getTextLength()), true) {
