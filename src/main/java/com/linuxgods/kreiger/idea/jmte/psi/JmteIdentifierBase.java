@@ -15,29 +15,16 @@ import java.util.stream.Stream;
 
 import static com.intellij.psi.PsiModifier.PUBLIC;
 
-public class JmteIdentifierBase extends ASTWrapperPsiElement implements JmteIdentifier {
+public class JmteIdentifierBase extends JmteElementBase implements JmteIdentifier {
     public JmteIdentifierBase(@NotNull ASTNode node) {
         super(node);
     }
 
-    public Optional<PsiClass> getPsiClass() {
-        if (!(getParent() instanceof JmteExpression e) || e.getExpression() != null) {
-            return Optional.empty();
-        }
-
-        Project project = getProject();
-        var jmteTypes = JmteTypesPersistentStateComponent.getInstance(project);
-        JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-        return jmteTypes.getFqn(this.getContainingFile().getVirtualFile(), getText())
-                        .map(fqn -> javaPsiFacade.findClass(fqn, GlobalSearchScopes.projectProductionScope(project)));
-
-    }
-
     @Override public PsiReference getReference() {
-        if (getParent() instanceof JmteExpression e && e.getExpression() == null) {
+        if (getParent() instanceof JmteExpression e && e.getQualifier() == null) {
             return new PsiReferenceBase<>(this, TextRange.from(0, getTextLength())) {
                 @Override public PsiElement resolve() {
-                    return getPsiClass().orElse(null);
+                    return e.getPsiClass().orElse(null);
                 }
             };
         }

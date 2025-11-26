@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.linuxgods.kreiger.idea.jmte.psi.JmteIdentifier;
+import com.linuxgods.kreiger.idea.jmte.psi.JmteExpression;
 import com.linuxgods.kreiger.idea.jmte.psi.JmteIdentifierBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,10 +30,9 @@ public class JmteRemoveTypeIntention implements IntentionAction {
         PsiFile jmteFile = viewProvider.getCachedPsi(JmteLanguage.INSTANCE);
 
         PsiElement atCaret = jmteFile.findElementAt(editor.getCaretModel().getOffset());
-        JmteIdentifier id = PsiTreeUtil.getParentOfType(atCaret, JmteIdentifier.class);
+        JmteExpression expr = PsiTreeUtil.getParentOfType(atCaret, JmteExpression.class);
 
-
-        return id != null && ((JmteIdentifierBase)id).getPsiClass().isPresent();
+        return expr != null && expr.getPsiClass().isPresent();
     }
 
     @Override
@@ -44,10 +43,10 @@ public class JmteRemoveTypeIntention implements IntentionAction {
         PsiFile psiFile = viewProvider.getPsi(JmteLanguage.INSTANCE);
 
         PsiElement atCaret = psiFile.findElementAt(editor.getCaretModel().getOffset());
-        JmteIdentifierBase id = PsiTreeUtil.getParentOfType(atCaret, JmteIdentifierBase.class);
+        JmteExpression expr = PsiTreeUtil.getParentOfType(atCaret, JmteExpression.class);
         JmteTypesPersistentStateComponent jmteTypes = JmteTypesPersistentStateComponent.getInstance(project);
         VirtualFile file = psiFile.getVirtualFile();
-        String name = id.getText();
+        String name = expr.getText();
         String oldFqn = jmteTypes.setFqn(file, name, null);
         DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
         UndoManager.getInstance(project).undoableActionPerformed(

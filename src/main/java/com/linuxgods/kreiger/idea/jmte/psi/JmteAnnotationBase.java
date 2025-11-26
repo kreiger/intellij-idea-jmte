@@ -11,7 +11,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class JmteAnnotationBase extends ASTWrapperPsiElement implements JmteIdentifier, PsiNameIdentifierOwner {
+public abstract class JmteAnnotationBase extends JmteElementBase implements JmteIdentifier, PsiNameIdentifierOwner {
     public JmteAnnotationBase(@NotNull ASTNode node) {
         super(node);
     }

@@ -11,7 +11,7 @@ import com.linuxgods.kreiger.idea.jmte.psi.JmteString;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JmteStringBase extends ASTWrapperPsiElement implements PsiLanguageInjectionHost, JmteString {
+public class JmteStringBase extends JmteElementBase implements PsiLanguageInjectionHost, JmteString {
     public JmteStringBase(@NotNull ASTNode node) {
         super(node);
     }
